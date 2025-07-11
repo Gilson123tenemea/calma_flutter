@@ -3,9 +3,7 @@ import 'bottom_nav_bar_contratante.dart';
 
 class AppRouterContratante {
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    // Obtener los argumentos pasados en la navegación
     final arguments = settings.arguments as Map<String, dynamic>?;
-
     switch (settings.name) {
       case '/':
         return MaterialPageRoute(

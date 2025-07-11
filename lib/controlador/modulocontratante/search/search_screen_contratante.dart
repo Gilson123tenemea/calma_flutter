@@ -9,7 +9,7 @@ class SearchScreenContratante extends StatelessWidget {
     // Ahora puedes usar widget.specificId aquí
     return Scaffold(
       body: Center(
-        child: Text('Buscar del contratante otra ve nuevo ID: $specificId'),
+        child: Text('Buscar del contratante extraer ID: $specificId'),
       ),
     );
   }

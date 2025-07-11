@@ -43,22 +43,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      final rol = response['rol'].toString().toUpperCase();
-      final userId = response['userId'];
-      final specificId = response['specificId'];
-      final idAspirante = response['idAspirante'];
+      debugPrint('Respuesta completa del servidor: ${response.toString()}');
 
-      debugPrint('Usuario ID: $userId');
-      debugPrint('ID Específico: $specificId');
+      // Extracción segura de datos
+      final usuario = response['usuario'] ?? {};
+      final rol = (usuario['rol'] ?? response['rol']).toString().toUpperCase();
+      final userId = response['usuarioId'] ?? usuario['idUsuario'];
+
+      // Cambios clave aquí:
+      final idAspirante = response['aspiranteId'];
+      final idContratante = response['contratanteId']; // Cambiado de specificId a contratanteId
+
+      debugPrint('Datos extraídos:');
+      debugPrint('Rol: $rol');
+      debugPrint('User ID: $userId');
       debugPrint('ID Aspirante: $idAspirante');
+      debugPrint('ID Contratante: $idContratante');
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _navigateBasedOnRole(rol, userId, specificId, idAspirante);
+          _navigateBasedOnRole(rol, userId, idContratante, idAspirante);
           _showMessage('¡Acceso exitoso!');
         }
       });
     } catch (e) {
+      debugPrint('Error en login: $e');
       if (mounted) {
         _showMessage('Error: ${e.toString()}');
       }
@@ -80,32 +89,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _navigateBasedOnRole(String rol, userId, specificId, idAspirante) {
+  void _navigateBasedOnRole(String rol, userId, idContratante, idAspirante) {
     if (!mounted) return;
 
-    // Debug adicional
-    debugPrint('ROL RECIBIDO: $rol (longitud: ${rol.length})');
-    debugPrint('Comparando con CONTRATANTE: ${rol == 'CONTRATANTE'}');
-    debugPrint('Comparando con contratante: ${rol == 'contratante'}');
-    debugPrint('Comparando con Contratante: ${rol == 'Contratante'}');
+    debugPrint('=== Datos para navegación ===');
+    debugPrint('Rol: $rol');
+    debugPrint('User ID: $userId');
+    debugPrint('ID Contratante: $idContratante');
+    debugPrint('ID Aspirante: $idAspirante');
 
     try {
       if (rol == 'ASPIRANTE') {
+        final id = idAspirante ?? 0; // Valor por defecto si es nulo
+        if (id <= 0) {
+          throw Exception('ID de aspirante inválido: $idAspirante');
+        }
+
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (_) => GoogleBottomBarAspirante(idAspirante: idAspirante),
+            builder: (_) => GoogleBottomBarAspirante(idAspirante: id),
           ),
               (route) => false,
         );
       }
-      else if (rol.toUpperCase() == 'CONTRATANTE') {
+      else if (rol == 'CONTRATANTE') {
+        final id = idContratante ?? 0; // Valor por defecto si es nulo
+        if (id <= 0) {
+          throw Exception('ID de contratante inválido: $idContratante');
+        }
+
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             settings: RouteSettings(
               name: '/',
-              arguments: {'specificId': specificId},
+              arguments: {'specificId': id},
             ),
-            builder: (_) => GoogleBottomBarContratante(specificId: specificId),
+            builder: (_) => GoogleBottomBarContratante(specificId: id),
           ),
               (route) => false,
         );
