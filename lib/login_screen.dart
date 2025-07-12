@@ -33,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) _showMessage('La contraseña debe tener al menos 8 caracteres');
       return;
     }
+
     setState(() => _isLoading = true);
 
     try {
@@ -41,33 +42,32 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
 
+      debugPrint('Respuesta PROCESADA: $response');
+
       if (!mounted) return;
 
-      debugPrint('Respuesta completa del servidor: ${response.toString()}');
+      final rol = (response['rol']?.toString() ?? '').toUpperCase();
+      final userId = response['userId'] as int? ?? 0;
+      final specificId = response['specificId'] as int? ?? 0;
 
-      // Extracción segura de datos
-      final usuario = response['usuario'] ?? {};
-      final rol = (usuario['rol'] ?? response['rol']).toString().toUpperCase();
-      final userId = response['usuarioId'] ?? usuario['idUsuario'];
-
-      // Cambios clave aquí:
-      final idAspirante = response['aspiranteId'];
-      final idContratante = response['contratanteId']; // Cambiado de specificId a contratanteId
-
-      debugPrint('Datos extraídos:');
+      debugPrint('Datos VALIDADOS:');
       debugPrint('Rol: $rol');
       debugPrint('User ID: $userId');
-      debugPrint('ID Aspirante: $idAspirante');
-      debugPrint('ID Contratante: $idContratante');
+      debugPrint('Specific ID: $specificId');
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _navigateBasedOnRole(rol, userId, idContratante, idAspirante);
+          _navigateBasedOnRole(
+            rol: rol,
+            userId: userId,
+            specificId: specificId,
+          );
           _showMessage('¡Acceso exitoso!');
         }
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error en login: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         _showMessage('Error: ${e.toString()}');
       }
@@ -78,70 +78,48 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  String _getErrorMessage(http.Response response) {
-    switch (response.statusCode) {
-      case 401:
-        return 'Credenciales incorrectas';
-      case 404:
-        return 'Usuario no encontrado';
-      default:
-        return 'Error del servidor. Código: ${response.statusCode}';
-    }
-  }
-
-  void _navigateBasedOnRole(String rol, userId, idContratante, idAspirante) {
+  void _navigateBasedOnRole({
+    required String rol,
+    required int userId,
+    required int specificId,
+  }) {
     if (!mounted) return;
 
-    debugPrint('=== Datos para navegación ===');
+    debugPrint('=== INICIANDO NAVEGACIÓN ===');
     debugPrint('Rol: $rol');
     debugPrint('User ID: $userId');
-    debugPrint('ID Contratante: $idContratante');
-    debugPrint('ID Aspirante: $idAspirante');
+    debugPrint('Specific ID: $specificId');
 
     try {
       if (rol == 'ASPIRANTE') {
-        final id = idAspirante ?? 0; // Valor por defecto si es nulo
-        if (id <= 0) {
-          throw Exception('ID de aspirante inválido: $idAspirante');
-        }
-
+        debugPrint('Navegando a módulo ASPIRANTE con ID: $specificId');
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (_) => GoogleBottomBarAspirante(idAspirante: id),
+            builder: (_) => GoogleBottomBarAspirante(idAspirante: specificId),
           ),
               (route) => false,
         );
       }
       else if (rol == 'CONTRATANTE') {
-        final id = idContratante ?? 0; // Valor por defecto si es nulo
-        if (id <= 0) {
-          throw Exception('ID de contratante inválido: $idContratante');
-        }
-
+        debugPrint('Navegando a módulo CONTRATANTE con ID: $specificId');
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            settings: RouteSettings(
-              name: '/',
-              arguments: {'specificId': id},
-            ),
-            builder: (_) => GoogleBottomBarContratante(specificId: id),
+            builder: (_) => GoogleBottomBarContratante(specificId: specificId),
           ),
               (route) => false,
         );
       }
       else {
-        debugPrint('Rol no reconocido: $rol');
-        _showMessage('Rol no reconocido: $rol');
+        throw Exception('Rol no reconocido: $rol');
       }
     } catch (e, stackTrace) {
-      debugPrint('Error en navegación: $e');
+      debugPrint('Error crítico en navegación: $e');
       debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         _showMessage('Error al navegar: ${e.toString()}');
       }
     }
   }
-
 
 
   Future<void> _handleRecovery() async {
@@ -156,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final userResponse = await http.get(
-        Uri.parse('http://192.168.0.109:8090/api/usuarios/por-correo?correo=$email'),
+        Uri.parse('http://192.168.0.102:8090/api/usuarios/por-correo?correo=$email'),
       );
 
       if (userResponse.statusCode != 200) {
@@ -168,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final userType = userData['userType'];
 
       final resetResponse = await http.post(
-        Uri.parse('http://192.168.0.109:8090/api/password/request-reset'),
+        Uri.parse('http://192.168.0.102:8090/api/password/request-reset'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {'userId': userId.toString(), 'userType': userType},
       );
