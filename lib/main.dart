@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../login_screen.dart'; // Asegúrate que el path sea correcto
+import 'package:calma/controlador/splash_screen.dart';
+import 'login_screen.dart'; // Mantén el import del login
 
 void main() {
   runApp(const MyApp());
@@ -11,12 +12,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'CALMA - Cuidado Geriátrico',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF1E3A8A)), // Azul oscuro como color principal
+        fontFamily: 'Roboto',
       ),
-      home: const LoginScreen(), // ← Aquí se lanza primero el Login
+      home: const SplashScreen(), // ← Ahora el splash screen se ejecuta primero
     );
   }
 }
