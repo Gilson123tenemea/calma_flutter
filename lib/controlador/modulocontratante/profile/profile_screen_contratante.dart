@@ -66,8 +66,11 @@ class _ProfileScreenContratanteState extends State<ProfileScreenContratante> {
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             onPressed: () {
-              // Navegar de vuelta al login
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+              );
             },
           ),
         ],
@@ -193,7 +196,11 @@ class _ProfileScreenContratanteState extends State<ProfileScreenContratante> {
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 ),
                 onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        (route) => false,
+                  );
                 },
                 child: const Text(
                   'Cerrar Sesión',

@@ -37,4 +37,20 @@ class PublicacionService {
       throw Exception('Error de conexión: $e');
     }
   }
+
+  static Future<void> cambiarEstadoPublicacion(int idGenera, String nuevoEstado) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${AppConfig.baseUrl}/api/generar/cambiar-estado/$idGenera?estado=$nuevoEstado'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error al cambiar estado: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
 }

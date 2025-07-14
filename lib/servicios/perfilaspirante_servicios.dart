@@ -9,16 +9,16 @@ class PerfilAspiranteService {
         Uri.parse(AppConfig.getPerfilAspiranteUrl(idAspirante)),
         headers: {
           'Content-Type': 'application/json',
-          // No necesitamos el token según lo indicado
+
         },
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
 
-        // Verificamos si la respuesta tiene la estructura esperada
+
         if (data.containsKey('aspirante') && data['aspirante'] != null) {
-          return data; // Devolvemos toda la respuesta
+          return data;
         } else {
           throw Exception('La estructura de la respuesta no es la esperada');
         }

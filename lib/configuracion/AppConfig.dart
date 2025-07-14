@@ -1,7 +1,7 @@
 
 
 class AppConfig {
-  static const String baseUrl = 'http://192.168.0.101:8090';
+  static const String baseUrl = 'http://192.168.0.109:8090';
 
   static const String loginEndpoint = '/api/login/auth';
   static const String perfilContratanteEndpoint = '/api/registro/contratante/detalle-completo';
@@ -15,5 +15,6 @@ class AppConfig {
   static String getRealizacionesUrl(int idContratante) => '$baseUrl$postulacionEndpoint/$idContratante/realizaciones';
   static String getActualizarPostulacionUrl(int id) => '$baseUrl$postulacionEndpoint/actualizar/$id';
   static String getPerfilAspiranteUrl(int id) => '$baseUrl$perfilAspiranteEndpoint/$id';
+  static String get cambiarEstadoPublicacionUrl => '$baseUrl/api/publicacion_empleo/cambiar-estado';
 // static String getTodasLasPublicacionesUrl() => '$baseUrl$generarEndpoint/publicaciones';
 }

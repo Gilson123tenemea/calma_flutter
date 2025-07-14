@@ -134,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final userResponse = await http.get(
-        Uri.parse('http://192.168.0.101:8090/api/usuarios/por-correo?correo=$email'),
+        Uri.parse('http://192.168.0.109:8090/api/usuarios/por-correo?correo=$email'),
       );
 
       if (userResponse.statusCode != 200) {
@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final userType = userData['userType'];
 
       final resetResponse = await http.post(
-        Uri.parse('http://192.168.0.101:8090/api/password/request-reset'),
+        Uri.parse('http://192.168.0.109:8090/api/password/request-reset'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {'userId': userId.toString(), 'userType': userType},
       );

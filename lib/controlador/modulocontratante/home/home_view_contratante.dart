@@ -140,7 +140,7 @@ class _HomeViewContratanteState extends State<HomeViewContratante> {
                                   backgroundColor: empleo['estado'] == 'Activo' ? Colors.red : Colors.green,
                                 ),
                                 onPressed: () {
-                                  _cambiarEstadoPublicacion(publicacion['id_genera']);
+                                  _cambiarEstadoPublicacion(publicacion['id_genera'], empleo['estado']);
                                 },
                               ),
                             ],
@@ -157,6 +157,8 @@ class _HomeViewContratanteState extends State<HomeViewContratante> {
       ),
     );
   }
+
+
 
   Widget _buildInfoRow(IconData icon, String text) {
     return Padding(
@@ -185,33 +187,46 @@ class _HomeViewContratanteState extends State<HomeViewContratante> {
     );
   }
 
-  void _cambiarEstadoPublicacion(int idPublicacion) {
+  void _cambiarEstadoPublicacion(int idGenera, String estadoActual) async {
+    final nuevoEstado = estadoActual == 'Activo' ? 'Inactivo' : 'Activo';
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cambiar estado'),
-        content: const Text('¿Estás seguro de cambiar el estado de esta publicación?'),
+        title: const Text('Confirmar cambio'),
+        content: Text('¿Cambiar estado a $nuevoEstado?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
-              // Lógica para cambiar estado
-              _refreshData();
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Estado cambiado exitosamente'),
-                  backgroundColor: _accentColor,
-                ),
-              );
+              try {
+                await PublicacionService.cambiarEstadoPublicacion(idGenera, nuevoEstado);
+                _refreshData();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Estado cambiado a $nuevoEstado'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
-            child: Text('Confirmar', style: TextStyle(color: _accentColor)),
+            child: const Text('Confirmar'),
           ),
         ],
       ),
     );
   }
+
+
 }
