@@ -2,6 +2,7 @@ import 'package:calma/configuracion/AppConfig.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:calma/servicios/mostrar_postulaciones_servicios.dart';
 
 class FavoritesScreenContratante extends StatefulWidget {
   final int specificId;
@@ -12,12 +13,13 @@ class FavoritesScreenContratante extends StatefulWidget {
 }
 
 class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante> {
+  final PostulacionService _postulacionService = PostulacionService(); // Inicialización del servicio
   List<dynamic> _postulaciones = [];
   bool _isLoading = true;
   String _errorMessage = '';
-  final Color _primaryColor = const Color(0xFF0A2647); // Azul oscuro profesional
-  final Color _secondaryColor = const Color(0xFF144272); // Azul medio
-  final Color _accentColor = const Color(0xFF2C74B3); // Azul claro
+  final Color _primaryColor = const Color(0xFF0A2647);
+  final Color _secondaryColor = const Color(0xFF144272);
+  final Color _accentColor = const Color(0xFF2C74B3);
 
   @override
   void initState() {
@@ -27,23 +29,17 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
 
   Future<void> _fetchPostulaciones() async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppConfig.baseUrl}/api/postulacion/${widget.specificId}/realizaciones'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
 
-      if (response.statusCode == 200) {
-        setState(() {
-          _postulaciones = json.decode(response.body);
-          _isLoading = false;
-        });
-      } else if (response.statusCode == 204) {
-        setState(() {
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Error al cargar las postulaciones: ${response.statusCode}');
-      }
+      final postulaciones = await _postulacionService.getPostulacionesPorContratante(widget.specificId);
+
+      setState(() {
+        _postulaciones = postulaciones;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -52,14 +48,30 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
     }
   }
 
-  void _handleAceptar(int postulacionId) {
-    // Lógica para aceptar postulación
-    _showSnackbar('Postulación $postulacionId aceptada');
+  Future<void> _handleAceptar(int postulacionId) async {
+    try {
+      final success = await _postulacionService.actualizarEstadoPostulacion(postulacionId, true);
+
+      if (success) {
+        _showSnackbar('Postulación aceptada correctamente');
+        await _fetchPostulaciones();
+      }
+    } catch (e) {
+      _showSnackbar('Error al aceptar postulación: ${e.toString()}');
+    }
   }
 
-  void _handleRechazar(int postulacionId) {
-    // Lógica para rechazar postulación
-    _showSnackbar('Postulación $postulacionId rechazada');
+  Future<void> _handleRechazar(int postulacionId) async {
+    try {
+      final success = await _postulacionService.actualizarEstadoPostulacion(postulacionId, false);
+
+      if (success) {
+        _showSnackbar('Postulación rechazada correctamente');
+        await _fetchPostulaciones();
+      }
+    } catch (e) {
+      _showSnackbar('Error al rechazar postulación: ${e.toString()}');
+    }
   }
 
   void _showSnackbar(String message) {
@@ -78,9 +90,7 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
       appBar: AppBar(
         title: const Text(
           'Postulaciones',
-          style: TextStyle(
-            color: Colors.white,
-          ),
+          style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
         backgroundColor: _primaryColor,
@@ -148,7 +158,7 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
                             ? Colors.green[100]
                             : Colors.red[100],
                         label: Text(
-                          postulacion['estado'] ? 'Activo' : 'Inactivo',
+                          postulacion['estado'] ? 'Aceptado' : 'Rechazado',
                           style: TextStyle(
                             color: postulacion['estado']
                                 ? Colors.green[800]

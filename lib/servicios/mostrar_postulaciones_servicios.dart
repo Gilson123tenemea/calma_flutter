@@ -1,60 +1,51 @@
-import 'dart:convert';
+import 'package:calma/configuracion/AppConfig.dart';
 import 'package:http/http.dart' as http;
-import '../configuracion/AppConfig.dart';
+import 'dart:convert';
 
 class PostulacionService {
-  final String _baseUrl = AppConfig.baseUrl;
+  Future<List<dynamic>> getPostulacionesPorContratante(int idContratante) async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/api/postulacion/$idContratante/realizaciones'),
+      headers: {'Content-Type': 'application/json'},
+    );
 
-  Future<List<dynamic>> getRealizacionesPorContratante(int idContratante) async {
-    final url = '$_baseUrl/api/postulacion/$idContratante/realizaciones';
-
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return List<dynamic>.from(data);
-      } else if (response.statusCode == 204) {
-        return [];
-      } else {
-        throw Exception('Error al obtener las realizaciones: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error de conexión: $e');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 204) {
+      return [];
+    } else {
+      throw Exception('Error al cargar postulaciones: ${response.statusCode}');
     }
   }
 
-  Future<bool> actualizarEstadoPostulacion(int postulacionId, bool nuevoEstado) async {
-    final url = AppConfig.getActualizarPostulacionUrl(postulacionId);
+  Future<bool> actualizarEstadoPostulacion(int postulacionId, bool estado) async {
+    final responseGet = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/api/postulacion/listar/$postulacionId'),
+      headers: {'Content-Type': 'application/json'},
+    );
 
-    try {
-      final response = await http.put(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'estado': nuevoEstado,
-          'postulacion_empleo': null // No actualizamos esta información
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        return true;
-      } else {
-        throw Exception('Error al actualizar: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error de conexión: $e');
+    if (responseGet.statusCode != 200) {
+      throw Exception('Error al obtener postulación: ${responseGet.statusCode}');
     }
-  }
 
-  Future<bool> aceptarPostulacion(int postulacionId) async {
-    return await actualizarEstadoPostulacion(postulacionId, true);
-  }
+    final postulacionActual = json.decode(responseGet.body);
+    final empleoId = postulacionActual['postulacion_empleo']['id_postulacion_empleo'];
 
-  Future<bool> rechazarPostulacion(int postulacionId) async {
-    return await actualizarEstadoPostulacion(postulacionId, false);
+    final responsePut = await http.put(
+      Uri.parse('${AppConfig.baseUrl}/api/postulacion/actualizar/$postulacionId'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'estado': estado,
+        'postulacion_empleo': {
+          'id_postulacion_empleo': empleoId
+        }
+      }),
+    );
+
+    if (responsePut.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Error al actualizar postulación: ${responsePut.statusCode}');
+    }
   }
 }
