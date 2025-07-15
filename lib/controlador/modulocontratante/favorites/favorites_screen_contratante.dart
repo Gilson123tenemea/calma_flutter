@@ -1,8 +1,10 @@
 import 'package:calma/configuracion/AppConfig.dart';
+import 'package:calma/controlador/modulocontratante/favorites/vercv.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:calma/servicios/mostrar_postulaciones_servicios.dart';
+
 
 class FavoritesScreenContratante extends StatefulWidget {
   final int specificId;
@@ -127,6 +129,8 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
           final parroquia = empleo['parroquia'];
           final canton = parroquia['canton'];
           final provincia = canton['provincia'];
+          final aspirante = _postulaciones[index]['aspirante'];
+          final idAspirante = aspirante['idAspirante'];
 
           return Card(
             elevation: 3,
@@ -167,6 +171,15 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  Text(
+                    'ID Aspirante: $idAspirante',
+                    style: TextStyle(
+                      color: _secondaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
 
@@ -248,6 +261,23 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
                         ),
                         onPressed: () => _handleAceptar(postulacion['id_postulacion']),
                         child: const Text('Aceptar'),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _accentColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => VerCV(aspiranteId: idAspirante),
+                            ),
+                          );
+                        },
+                        child: const Text('Ver CV'),
                       ),
                     ],
                   ),
