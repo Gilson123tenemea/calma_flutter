@@ -1,3 +1,4 @@
+import 'package:calma/servicios/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -64,13 +65,15 @@ class _ProfileScreenContratanteState extends State<ProfileScreenContratante> {
             ),
             TextButton(
               child: const Text('Sí, cerrar sesión', style: TextStyle(color: Colors.red)),
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      (route) => false,
-                );
+              onPressed: () async {
+                await SessionService().clearSession();
+
+                if (mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        (route) => false,
+                  );
+                }
               },
             ),
           ],

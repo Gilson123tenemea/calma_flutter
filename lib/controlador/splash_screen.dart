@@ -131,8 +131,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     // Espera 2 segundos después de que aparezca el texto
     await Future.delayed(Duration(milliseconds: 2800));
 
-    // Navega a la pantalla de términos y condiciones
-    _navigateToTerminos();
+    await _checkSessionAndNavigate();
+
   }
 
   Future<void> _checkSessionAndNavigate() async {
@@ -143,13 +143,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final int specificId = session['specificId'] as int;
 
     if (!termsAccepted) {
-      // Mostrar términos si no han sido aceptados
       _navigateToTerminos();
     } else if (isLoggedIn) {
-      // Redirigir al módulo correspondiente si hay sesión
       _navigateToHome(rol, specificId);
     } else {
-      // Ir al login si no hay sesión pero términos ya aceptados
       _navigateToLogin();
     }
   }
