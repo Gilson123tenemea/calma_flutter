@@ -1,3 +1,7 @@
+import 'package:calma/controlador/moduloaspirante/navigation/bottom_nav_bar.dart';
+import 'package:calma/controlador/modulocontratante/navigation/bottom_nav_bar_contratante.dart';
+import 'package:calma/login_screen.dart';
+import 'package:calma/servicios/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'terminos_condiciones.dart';
@@ -9,8 +13,7 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _holeController;
   late AnimationController _logoController;
   late AnimationController _textController;
@@ -130,6 +133,41 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Navega a la pantalla de términos y condiciones
     _navigateToTerminos();
+  }
+
+  Future<void> _checkSessionAndNavigate() async {
+    final session = await SessionService().getSession();
+    final bool termsAccepted = session['termsAccepted'] as bool;
+    final bool isLoggedIn = session['isLoggedIn'] as bool;
+    final String rol = session['rol'] as String;
+    final int specificId = session['specificId'] as int;
+
+    if (!termsAccepted) {
+      // Mostrar términos si no han sido aceptados
+      _navigateToTerminos();
+    } else if (isLoggedIn) {
+      // Redirigir al módulo correspondiente si hay sesión
+      _navigateToHome(rol, specificId);
+    } else {
+      // Ir al login si no hay sesión pero términos ya aceptados
+      _navigateToLogin();
+    }
+  }
+
+  void _navigateToLogin() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+
+  void _navigateToHome(String rol, int specificId) {
+    Widget homeScreen = rol == 'aspirante'
+        ? GoogleBottomBarAspirante(idAspirante: specificId)
+        : GoogleBottomBarContratante(specificId: specificId);
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => homeScreen),
+    );
   }
 
   void _navigateToTerminos() {

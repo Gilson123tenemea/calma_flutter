@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:calma/servicios/session_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import '../configuracion/AppConfig.dart';
@@ -19,14 +20,18 @@ class AuthService {
     debugPrint('Respuesta CRUDA del servidor: ${response.body}');
 
     if (response.statusCode == 200) {
-      // Extracción segura de datos con verificación de null
       final rol = responseData['rol']?.toString()?.toLowerCase() ?? '';
       final usuarioId = _parseInt(responseData['usuarioId']);
 
-      // Determinar el ID específico basado en el rol
       final specificId = rol == 'aspirante'
           ? _parseInt(responseData['aspiranteId'])
           : _parseInt(responseData['contratanteId']);
+
+      await SessionService().saveSession(
+        userId: usuarioId,
+        specificId: specificId,
+        rol: rol,
+      );
 
       return {
         'success': true,
@@ -39,7 +44,6 @@ class AuthService {
     }
   }
 
-  // Función helper para parsear enteros de forma segura
   static int _parseInt(dynamic value) {
     if (value == null) return 0;
     if (value is int) return value;

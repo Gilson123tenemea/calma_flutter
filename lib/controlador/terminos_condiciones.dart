@@ -1,5 +1,8 @@
+import 'package:calma/controlador/moduloaspirante/navigation/bottom_nav_bar.dart';
+import 'package:calma/controlador/modulocontratante/navigation/bottom_nav_bar_contratante.dart';
+import 'package:calma/servicios/session_service.dart';
 import 'package:flutter/material.dart';
-import '../login_screen.dart'; // Importa tu pantalla de login
+import '../login_screen.dart';
 
 class TerminosCondiciones extends StatefulWidget {
   const TerminosCondiciones({Key? key}) : super(key: key);
@@ -48,13 +51,34 @@ class _TerminosCondicionesState extends State<TerminosCondiciones>
     super.dispose();
   }
 
-  void _handleContinue() {
+  void _handleContinue() async {
     if (_isAccepted) {
-      // Navega a la pantalla de login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+      // Marcar términos como aceptados
+      await SessionService().acceptTerms();
+
+      // Verificar si hay sesión activa
+      final session = await SessionService().getSession();
+      final bool isLoggedIn = session['isLoggedIn'] as bool;
+      final String rol = session['rol'] as String;
+      final int specificId = session['specificId'] as int;
+
+      if (isLoggedIn) {
+        // Redirigir al módulo correspondiente
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => rol == 'aspirante'
+                ? GoogleBottomBarAspirante(idAspirante: specificId)
+                : GoogleBottomBarContratante(specificId: specificId),
+          ),
+        );
+      } else {
+        // Ir al login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     }
   }
 
