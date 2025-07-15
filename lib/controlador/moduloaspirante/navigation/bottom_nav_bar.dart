@@ -32,7 +32,6 @@ class _GoogleBottomBarAspiranteState extends State<GoogleBottomBarAspirante> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Google Bottom Bar')),
       body: _screens[_selectedIndex],
       bottomNavigationBar: SalomonBottomBar(
         currentIndex: _selectedIndex,

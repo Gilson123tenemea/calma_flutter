@@ -13,7 +13,7 @@ class FavoritesScreenContratante extends StatefulWidget {
 }
 
 class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante> {
-  final PostulacionService _postulacionService = PostulacionService(); // Inicialización del servicio
+  final PostulacionService _postulacionService = PostulacionService();
   List<dynamic> _postulaciones = [];
   bool _isLoading = true;
   String _errorMessage = '';
