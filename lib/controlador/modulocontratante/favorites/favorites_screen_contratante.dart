@@ -10,6 +10,7 @@ class FavoritesScreenContratante extends StatefulWidget {
   final int specificId;
   const FavoritesScreenContratante({super.key, required this.specificId});
 
+
   @override
   _FavoritesScreenContratanteState createState() => _FavoritesScreenContratanteState();
 }
@@ -22,6 +23,7 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
   final Color _primaryColor = const Color(0xFF0A2647);
   final Color _secondaryColor = const Color(0xFF144272);
   final Color _accentColor = const Color(0xFF2C74B3);
+
 
   @override
   void initState() {
@@ -50,9 +52,14 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
     }
   }
 
-  Future<void> _handleAceptar(int postulacionId) async {
+  Future<void> _handleAceptar(int postulacionId, int idAspirante) async {
     try {
-      final success = await _postulacionService.actualizarEstadoPostulacion(postulacionId, true);
+      final success = await _postulacionService.actualizarEstadoPostulacion(
+        postulacionId: postulacionId,
+        contratanteId: widget.specificId, // Usamos el ID del contratante que viene como parámetro
+        aspiranteId: idAspirante,
+        estado: true,
+      );
 
       if (success) {
         _showSnackbar('Postulación aceptada correctamente');
@@ -63,9 +70,14 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
     }
   }
 
-  Future<void> _handleRechazar(int postulacionId) async {
+  Future<void> _handleRechazar(int postulacionId, int idAspirante) async {
     try {
-      final success = await _postulacionService.actualizarEstadoPostulacion(postulacionId, false);
+      final success = await _postulacionService.actualizarEstadoPostulacion(
+        postulacionId: postulacionId,
+        contratanteId: widget.specificId,
+        aspiranteId: idAspirante,
+        estado: false,
+      );
 
       if (success) {
         _showSnackbar('Postulación rechazada correctamente');
@@ -84,6 +96,31 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
       ),
     );
   }
+
+  // Agrega esta función en tu clase _FavoritesScreenContratanteState
+  Map<String, dynamic> _getEstadoData(bool? estado) {
+    if (estado == null) {
+      return {
+        'texto': 'Pendiente',
+        'color': Colors.blue[800]!,
+        'bgColor': Colors.blue[100]!,
+      };
+    } else if (estado) {
+      return {
+        'texto': 'Aceptado',
+        'color': Colors.green[800]!,
+        'bgColor': Colors.green[100]!,
+      };
+    } else {
+      return {
+        'texto': 'Rechazado',
+        'color': Colors.red[800]!,
+        'bgColor': Colors.red[100]!,
+      };
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -157,32 +194,22 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
                           ),
                         ),
                       ),
-                      Chip(
-                        backgroundColor: postulacion['estado']
-                            ? Colors.green[100]
-                            : Colors.red[100],
-                        label: Text(
-                          postulacion['estado'] ? 'Aceptado' : 'Rechazado',
-                          style: TextStyle(
-                            color: postulacion['estado']
-                                ? Colors.green[800]
-                                : Colors.red[800],
-                          ),
-                        ),
+
+                      Builder(
+                        builder: (context) {
+                          final estadoData = _getEstadoData(postulacion['estado']);
+                          return Chip(
+                            backgroundColor: estadoData['bgColor'],
+                            label: Text(
+                              estadoData['texto'],
+                              style: TextStyle(color: estadoData['color']),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  Text(
-                    'ID Aspirante: $idAspirante',
-                    style: TextStyle(
-                      color: _secondaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
                   // Descripción
                   Text(
                     empleo['descripcion'],
@@ -240,6 +267,7 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
                   const SizedBox(height: 16),
 
                   // Botones de acción
+                  // Botones de acción
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -249,7 +277,10 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
                           side: const BorderSide(color: Colors.red),
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                         ),
-                        onPressed: () => _handleRechazar(postulacion['id_postulacion']),
+                        onPressed: () => _handleRechazar(
+                            postulacion['id_postulacion'],
+                            idAspirante
+                        ),
                         child: const Text('Rechazar'),
                       ),
                       const SizedBox(width: 16),
@@ -259,7 +290,10 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                         ),
-                        onPressed: () => _handleAceptar(postulacion['id_postulacion']),
+                        onPressed: () => _handleAceptar(
+                            postulacion['id_postulacion'],
+                            idAspirante
+                        ),
                         child: const Text('Aceptar'),
                       ),
                       const SizedBox(width: 16),

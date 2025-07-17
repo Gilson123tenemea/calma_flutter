@@ -5,6 +5,11 @@ import 'dart:convert';
 import 'package:calma/configuracion/AppConfig.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
+import 'package:flutter/services.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 
 class VerCV extends StatefulWidget {
   final int aspiranteId;
@@ -50,72 +55,145 @@ class _VerCVState extends State<VerCV> {
     }
   }
 
+  Future<bool> _checkAndRequestStoragePermissions() async {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    final sdkVersion = androidInfo.version.sdkInt ?? 0;
+
+    if (sdkVersion >= 30) {
+      // Android 11+ - Usar el directorio de la aplicación (no necesita permisos)
+      return true;
+    } else if (sdkVersion == 29) {
+      // Android 10 - Verificar si tenemos acceso legacy
+      if (await Permission.storage.isGranted) {
+        return true;
+      }
+      return (await Permission.storage.request()).isGranted;
+    } else {
+      // Android 6-9 - Necesitamos WRITE_EXTERNAL_STORAGE
+      if (await Permission.storage.isGranted) {
+        return true;
+      }
+      final status = await Permission.storage.request();
+      return status.isGranted;
+    }
+  }
+
+
+
   Future<void> _descargarArchivo(String url, String nombreArchivo) async {
     try {
-      // Solicitar permisos de almacenamiento
-      var status = await Permission.storage.request();
-      if (!status.isGranted) {
-        throw Exception('Permiso de almacenamiento denegado');
+      // 1. Verificar conexión a internet
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        throw Exception('Se requiere conexión a internet');
       }
 
-      // Mostrar diálogo de carga
+      // 2. Obtener directorio adecuado
+      final directory = await _getDownloadDirectory();
+      if (directory == null) {
+        throw Exception('No se pudo acceder al directorio de descargas');
+      }
+
+      // 3. Verificar permisos (solo para Android < 10)
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      if (androidInfo.version.sdkInt != null && androidInfo.version.sdkInt! < 29) {
+        if (!await _checkAndRequestStoragePermissions()) {
+          throw Exception('Permisos de almacenamiento denegados');
+        }
+      }
+
+      // 4. Mostrar progreso
+      bool downloadCompleted = false;
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Descargando archivo...'),
-              ],
-            ),
-          );
-        },
+        builder: (context) => AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              const Text('Descargando archivo...'),
+              if (!downloadCompleted)
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancelar'),
+                ),
+            ],
+          ),
+        ),
       );
 
-      // Realizar la petición HTTP
+      // 5. Descargar el archivo
+      final file = File('${directory.path}/$nombreArchivo');
       final response = await http.get(Uri.parse(url));
 
-      Navigator.of(context).pop(); // Cerrar diálogo de carga
+      if (mounted) {
+        Navigator.of(context).pop();
+        downloadCompleted = true;
+      }
 
       if (response.statusCode == 200) {
-        // Obtener directorio de descargas
-        final directory = await getExternalStorageDirectory();
-        final path = directory?.path ?? '/storage/emulated/0/Download';
-
-        // Crear archivo
-        final file = File('$path/$nombreArchivo');
-
-        // Escribir bytes en el archivo
         await file.writeAsBytes(response.bodyBytes);
 
-        // Mostrar confirmación
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Archivo descargado en: $path/$nombreArchivo'),
-            action: SnackBarAction(
-              label: 'Abrir',
-              onPressed: () async {
-                if (await file.exists()) {
-                  // Abrir el archivo con una aplicación compatible
-                  // Necesitarás el paquete 'open_file' para esto
-                  // Ejemplo: await OpenFile.open(file.path);
-                }
-              },
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Archivo descargado: ${file.path}'),
+              action: SnackBarAction(
+                label: 'Abrir',
+                onPressed: () => OpenFile.open(file.path),
+              ),
             ),
-          ),
-        );
+          );
+        }
       } else {
-        throw Exception('Error al descargar archivo: ${response.statusCode}');
+        throw Exception('Error al descargar: ${response.statusCode}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
+  }
+
+  Future<Directory?> _getDownloadDirectory() async {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    final sdkVersion = androidInfo.version.sdkInt ?? 0;
+
+    if (sdkVersion >= 29) {
+      // Android 10+ - Usar directorio interno de la app
+      return await getApplicationDocumentsDirectory();
+    } else {
+      // Android 6-9 - Usar almacenamiento externo
+      final dir = await getExternalStorageDirectory();
+      final downloadDir = Directory('${dir?.path}/Download');
+      if (!await downloadDir.exists()) {
+        await downloadDir.create(recursive: true);
+      }
+      return downloadDir;
+    }
+  }
+
+  Future<bool> _checkStoragePermissions() async {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    final sdkVersion = androidInfo.version.sdkInt ?? 0;
+
+    // Android 13+ no necesita permisos para el directorio de la aplicación
+    if (sdkVersion >= 29) {
+      return true;
+    }
+
+    // Para versiones anteriores (Android 6-9)
+    final status = await Permission.storage.status;
+    if (!status.isGranted) {
+      final result = await Permission.storage.request();
+      return result.isGranted;
+    }
+
+    return true;
   }
 
   Future<void> _descargarCertificado(int certificadoId) async {

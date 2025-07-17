@@ -18,34 +18,50 @@ class PostulacionService {
     }
   }
 
-  Future<bool> actualizarEstadoPostulacion(int postulacionId, bool estado) async {
-    final responseGet = await http.get(
-      Uri.parse('${AppConfig.baseUrl}/api/postulacion/listar/$postulacionId'),
-      headers: {'Content-Type': 'application/json'},
-    );
+  Future<bool> actualizarEstadoPostulacion({
+    required int postulacionId,
+    required int contratanteId,
+    required int aspiranteId,
+    required bool estado,
+  }) async {
+    try {
+      // 1. Obtener los datos actuales de la postulación (si aún los necesitas)
+      final responseGet = await http.get(
+        Uri.parse('${AppConfig.baseUrl}/api/postulacion/listar/$postulacionId'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-    if (responseGet.statusCode != 200) {
-      throw Exception('Error al obtener postulación: ${responseGet.statusCode}');
-    }
+      if (responseGet.statusCode != 200) {
+        throw Exception('Error al obtener postulación: ${responseGet.statusCode}');
+      }
 
-    final postulacionActual = json.decode(responseGet.body);
-    final empleoId = postulacionActual['postulacion_empleo']['id_postulacion_empleo'];
+      final postulacionActual = json.decode(responseGet.body);
+      final empleoId = postulacionActual['postulacion_empleo']['id_postulacion_empleo'];
 
-    final responsePut = await http.put(
-      Uri.parse('${AppConfig.baseUrl}/api/postulacion/actualizar/$postulacionId'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'estado': estado,
-        'postulacion_empleo': {
-          'id_postulacion_empleo': empleoId
-        }
-      }),
-    );
+      // 2. Realizar la petición PUT con todos los IDs
+      final responsePut = await http.put(
+        Uri.parse(AppConfig.getActualizarPostulacionUrl(
+            postulacionId,
+            contratanteId,
+            aspiranteId
+        )),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'estado': estado,
+          'postulacion_empleo': {
+            'id_postulacion_empleo': empleoId
+          }
+        }),
+      );
 
-    if (responsePut.statusCode == 200) {
-      return true;
-    } else {
-      throw Exception('Error al actualizar postulación: ${responsePut.statusCode}');
+      if (responsePut.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Error al actualizar postulación: ${responsePut.statusCode}');
+      }
+    } catch (e) {
+      print('Error en actualizarEstadoPostulacion: $e');
+      rethrow;
     }
   }
 }

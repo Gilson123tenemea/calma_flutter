@@ -1,7 +1,7 @@
 
 
 class AppConfig {
-  static const String baseUrl = 'http://192.168.0.109:8090';
+  static const String baseUrl = 'http://192.168.0.103:8090';
 
   static const String loginEndpoint = '/api/login/auth';
   static const String perfilContratanteEndpoint = '/api/registro/contratante/detalle-completo';
@@ -17,7 +17,6 @@ class AppConfig {
   static String get loginUrl => '$baseUrl$loginEndpoint';
   static String getPerfilContratanteUrl(int id) => '$baseUrl$perfilContratanteEndpoint/$id';
   static String getRealizacionesUrl(int idContratante) => '$baseUrl$postulacionEndpoint/$idContratante/realizaciones';
-  static String getActualizarPostulacionUrl(int id) => '$baseUrl$postulacionEndpoint/actualizar/$id';
   static String getPerfilAspiranteUrl(int id) => '$baseUrl$perfilAspiranteEndpoint/$id';
   static String get cambiarEstadoPublicacionUrl => '$baseUrl/api/publicacion_empleo/cambiar-estado';
 // static String getTodasLasPublicacionesUrl() => '$baseUrl$generarEndpoint/publicaciones';
@@ -28,4 +27,10 @@ class AppConfig {
   static String getDescargarCertificadoUrl(int certificadoId) => '$baseUrl$descargarCertificadoEndpoint/$certificadoId/descargar';
   static String getDescargarRecomendacionUrl(int recomendacionId) => '$baseUrl$descargarRecomendacionEndpoint/$recomendacionId/descargar';
 
+  static String getPublicacionesNoPostuladasUrl(int idAspirante) =>
+      '$baseUrl$generarEndpoint/publicaciones-no-postuladas/$idAspirante';
+  static String getActualizarPostulacionUrl(int postulacionId, int contratanteId, int aspiranteId) =>
+      '$baseUrl$postulacionEndpoint/actualizar/$postulacionId/$contratanteId/$aspiranteId';
+  static String getPostulacionesPorAspiranteUrl(int idAspirante) =>
+      '$baseUrl/api/realizar/aspirante/$idAspirante';
 }

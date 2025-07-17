@@ -21,6 +21,7 @@ class PublicacionGenerada {
   final String nombreCanton;
   final String nombreProvincia;
   final bool disponibilidadInmediata;
+  final String actividadesRealizar;
 
   PublicacionGenerada({
     required this.idGenera,
@@ -39,6 +40,7 @@ class PublicacionGenerada {
     required this.nombreCanton,
     required this.nombreProvincia,
     required this.disponibilidadInmediata,
+    required this.actividadesRealizar,
   });
 
   factory PublicacionGenerada.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class PublicacionGenerada {
       nombreCanton: json['publicacionempleo']['parroquia']['canton']['nombre'] ?? '',
       nombreProvincia: json['publicacionempleo']['parroquia']['canton']['provincia']['nombre'] ?? '',
       disponibilidadInmediata: json['publicacionempleo']['disponibilidad_inmediata'] ?? false,
+      actividadesRealizar: json['publicacionempleo']['actividades_realizar'] ?? 'No especificado',
     );
   }
 
@@ -72,37 +75,50 @@ class PublicacionGenerada {
 }
 
 class PublicacionService {
-  Future<List<PublicacionGenerada>> obtenerPublicacionesGeneradas() async {
+  Future<List<PublicacionGenerada>> obtenerPublicacionesNoPostuladas(int idAspirante) async {
     try {
+      // Verificación adicional del ID (aunque ya confirmaste que llega)
+      print('🟢 ID Aspirante en servicio: $idAspirante');
+
+      final url = '${AppConfig.baseUrl}/api/generar/publicaciones-no-postuladas/$idAspirante';
+      print('🔵 URL completa: $url');
+
       final response = await http.get(
-        Uri.parse(AppConfig.getPublicacionesGeneradasUrl()),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          // Si tu API requiere autenticación:
+          // 'Authorization': 'Bearer $token',
+        },
       );
 
+      print('🟢 Código de respuesta: ${response.statusCode}');
+      print('🟢 Respuesta del servidor: ${response.body}');
+
       if (response.statusCode == 200) {
-        List<dynamic> body = json.decode(response.body);
+        final List<dynamic> body = json.decode(response.body);
         if (body.isEmpty) {
-          throw Exception('No hay publicaciones disponibles');
+          print('🟠 La lista de publicaciones está vacía');
+          return [];
         }
-        return body.map((dynamic item) => PublicacionGenerada.fromJson(item)).toList();
-      } else if (response.statusCode == 404) {
-        throw Exception('Endpoint no encontrado');
-      } else if (response.statusCode >= 500) {
-        throw Exception('Error del servidor');
+        return body.map((json) => PublicacionGenerada.fromJson(json)).toList();
       } else {
-        throw Exception('Error al cargar las publicaciones: ${response.statusCode}');
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Error al cargar publicaciones');
       }
-    } on FormatException {
-      throw Exception('Error al procesar los datos');
-    } on http.ClientException {
-      throw Exception('Error de conexión con el servidor');
     } catch (e) {
-      throw Exception('Error desconocido: $e');
+      print('🔴 Error en obtenerPublicacionesNoPostuladas: $e');
+      throw Exception('Error al obtener publicaciones: ${e.toString()}');
     }
   }
+
 }
 
 class VerPublicacionesEmpleo extends StatefulWidget {
+  final int idAspirante; // Añadimos el idAspirante como parámetro requerido
+
+  const VerPublicacionesEmpleo({required this.idAspirante, Key? key}) : super(key: key);
+
   @override
   _VerPublicacionesEmpleoState createState() => _VerPublicacionesEmpleoState();
 }
@@ -114,12 +130,12 @@ class _VerPublicacionesEmpleoState extends State<VerPublicacionesEmpleo> {
   @override
   void initState() {
     super.initState();
-    _futurePublicaciones = _publicacionService.obtenerPublicacionesGeneradas();
+    _futurePublicaciones = _publicacionService.obtenerPublicacionesNoPostuladas(widget.idAspirante);
   }
 
   Future<void> _refreshData() async {
     setState(() {
-      _futurePublicaciones = _publicacionService.obtenerPublicacionesGeneradas();
+      _futurePublicaciones = _publicacionService.obtenerPublicacionesNoPostuladas(widget.idAspirante);
     });
   }
 
@@ -127,7 +143,7 @@ class _VerPublicacionesEmpleoState extends State<VerPublicacionesEmpleo> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Publicaciones de Empleo'),
+        title: Text('Publicaciones de Empleo no postuladas'),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -180,7 +196,7 @@ class _VerPublicacionesEmpleoState extends State<VerPublicacionesEmpleo> {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Intenta más tarde o crea una nueva publicación',
+                      'No tienes publicaciones no postuladas o no hay ofertas disponibles',
                       style: TextStyle(color: Colors.grey),
                     ),
                   ],
@@ -201,7 +217,6 @@ class _VerPublicacionesEmpleoState extends State<VerPublicacionesEmpleo> {
       ),
     );
   }
-
   Widget _buildPublicacionCard(PublicacionGenerada publicacion) {
     return Card(
       elevation: 4.0,

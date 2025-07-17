@@ -13,7 +13,6 @@ class HomeView extends StatelessWidget {
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
-          // AppBar estilo LinkedIn
           SliverAppBar(
             backgroundColor: const Color(0xFF0E3E8B),
             pinned: true,
@@ -38,7 +37,7 @@ class HomeView extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: FutureBuilder<List<PublicacionGenerada>>(
-                future: PublicacionService().obtenerPublicacionesGeneradas(),
+                future: PublicacionService().obtenerPublicacionesNoPostuladas(idAspirante),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return _buildLoadingIndicator();
@@ -98,7 +97,7 @@ class HomeView extends StatelessWidget {
           const SizedBox(height: 16),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0E3E8B), // Cambiado de primary a backgroundColor
+              backgroundColor: const Color(0xFF0E3E8B),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -153,59 +152,35 @@ class HomeView extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // Navegar a detalles
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetallePublicacionView(
+                publicacion: publicacion,
+                idAspirante: idAspirante,
+              ),
+            ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Encabezado con logo y título
+              // Título y estado
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Placeholder para logo de empresa
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0E3E8B).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: const Color(0xFF0E3E8B).withOpacity(0.3),
-                        width: 1,
+                  Expanded(
+                    child: Text(
+                      publicacion.titulo,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
-                    child: Icon(
-                      Icons.business_center,
-                      color: const Color(0xFF0E3E8B),
-                    ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          publicacion.titulo,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          publicacion.nombreCompletoContratante,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Estado
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -236,54 +211,78 @@ class HomeView extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
-              // Descripción
+              // Nombre del contratante
               Text(
-                publicacion.descripcion,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+                'Publicado por: ${publicacion.nombreCompletoContratante}',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[800],
+                  color: Colors.grey[700],
+                  fontStyle: FontStyle.italic,
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Detalles en 2 columnas
+              // Salario estimado
               Row(
                 children: [
-                  Expanded(
-                    child: _buildJobDetailItem(
-                      Icons.attach_money,
-                      'Salario',
-                      '\$${publicacion.salario.toStringAsFixed(2)}',
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildJobDetailItem(
-                      Icons.location_on,
-                      'Ubicación',
-                      publicacion.nombreCanton,
+                  Icon(Icons.attach_money, size: 20, color: const Color(0xFF0E3E8B)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Salario estimado: \$${publicacion.salario.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Row(
+              const SizedBox(height: 12),
+
+              // Actividades a realizar
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _buildJobDetailItem(
-                      Icons.date_range,
-                      'Fecha límite',
-                      _formatDate(publicacion.fechaLimite),
+                  Text(
+                    'Actividades a realizar:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Expanded(
-                    child: _buildJobDetailItem(
-                      Icons.access_time,
-                      'Jornada',
-                      publicacion.jornada,
+                  const SizedBox(height: 4),
+                  Text(
+                    publicacion.actividadesRealizar,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Ubicación
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Ubicación:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${publicacion.nombreParroquia}, ${publicacion.nombreCanton}, ${publicacion.nombreProvincia}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[800],
                     ),
                   ),
                 ],
@@ -314,7 +313,7 @@ class HomeView extends StatelessWidget {
                         );
                       },
                       child: const Text(
-                        'VER OFERTA',
+                        'VER DETALLES',
                         style: TextStyle(color: Color(0xFF0E3E8B)),
                       ),
                     ),
@@ -340,11 +339,11 @@ class HomeView extends StatelessWidget {
                   ),
                 ],
               ),
-            ], // <-- Esta llave cierra el Column de children
-          ), // <-- Esta llave cierra el Column principal
-        ), // <-- Esta llave cierra el Padding
-      ), // <-- Esta llave cierra el InkWell
-    ); // <-- Esta llave cierra el Card
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _postularse(BuildContext context, PublicacionGenerada publicacion) async {
@@ -380,7 +379,7 @@ class HomeView extends StatelessWidget {
       final realizarService = RealizarService();
       final result = await realizarService.postularAEmpleo(
         idAspirante,
-        publicacion.idGenera, // Usamos id directamente como en la versión web
+        publicacion.idGenera,
       );
 
       // Cerrar el diálogo de carga
@@ -388,14 +387,12 @@ class HomeView extends StatelessWidget {
 
       // Mostrar resultado
       if (result['success'] == true) {
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('¡Postulación exitosa!'),
             backgroundColor: Colors.green,
           ),
         );
-        // Aquí podrías actualizar el estado para marcar como postulado
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -412,66 +409,6 @@ class HomeView extends StatelessWidget {
           backgroundColor: Colors.red,
         ),
       );
-    }
-  }
-
-  void _mostrarMensajeExito(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Postulación exitosa'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _mostrarMensajeError(BuildContext context, String mensaje) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-  Widget _buildJobDetailItem(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 18,
-          color: const Color(0xFF0E3E8B),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[800],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  String _formatDate(String dateString) {
-    try {
-      final dateTime = DateTime.parse(dateString);
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-    } catch (e) {
-      return dateString;
     }
   }
 }
