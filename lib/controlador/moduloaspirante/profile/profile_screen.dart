@@ -88,13 +88,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A2647),
         title: const Center(
           child: Text(
-            'Perfil del Aspirante',
-            style: TextStyle(color: Colors.white),
+            'Perfil',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
         ),
+        backgroundColor: const Color(0xFF0E1E3A), // Azul oscuro
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app),

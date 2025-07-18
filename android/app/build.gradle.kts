@@ -45,6 +45,19 @@ android {
             force("androidx.core:core-ktx:1.12.0")
         }
     }
+    subprojects {
+        afterEvaluate {
+            if (this is Project) {
+                extensions.findByType<com.android.build.gradle.BaseExtension>()?.apply {
+                    compileOptions {
+                        sourceCompatibility = JavaVersion.VERSION_11
+                        targetCompatibility = JavaVersion.VERSION_11
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 flutter {

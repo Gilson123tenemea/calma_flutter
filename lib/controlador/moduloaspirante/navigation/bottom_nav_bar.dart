@@ -51,22 +51,22 @@ class _GoogleBottomBarAspiranteState extends State<GoogleBottomBarAspirante> {
 final _navBarItems = [
   SalomonBottomBarItem(
     icon: const Icon(Icons.home),
-    title: const Text("Home"),
+    title: const Text("Empleos"),
     selectedColor: Colors.purple,
   ),
   SalomonBottomBarItem(
     icon: const Icon(Icons.favorite_border),
-    title: const Text("Likes"),
+    title: const Text("Postulaciones"),
     selectedColor: Colors.pink,
   ),
   SalomonBottomBarItem(
-    icon: const Icon(Icons.search),
-    title: const Text("Search"),
+    icon: const Icon(Icons.notification_add),
+    title: const Text("Notificaciones"),
     selectedColor: Colors.orange,
   ),
   SalomonBottomBarItem(
     icon: const Icon(Icons.person),
-    title: const Text("Profile"),
+    title: const Text("Perfil"),
     selectedColor: Colors.teal,
   ),
 ];

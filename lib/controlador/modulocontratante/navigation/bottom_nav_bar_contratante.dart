@@ -60,8 +60,8 @@ final _navBarItems = [
     selectedColor: Colors.green,
   ),
   SalomonBottomBarItem(
-    icon: const Icon(Icons.message),
-    title: const Text("Crear Empleo"),
+    icon: const Icon(Icons.notification_add),
+    title: const Text("Notificaciones"),
     selectedColor: Colors.orange,
   ),
   SalomonBottomBarItem(

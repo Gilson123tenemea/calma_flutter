@@ -22,6 +22,7 @@ class PublicacionGenerada {
   final String nombreProvincia;
   final bool disponibilidadInmediata;
   final String actividadesRealizar;
+  final int idContratante;
 
   PublicacionGenerada({
     required this.idGenera,
@@ -41,6 +42,7 @@ class PublicacionGenerada {
     required this.nombreProvincia,
     required this.disponibilidadInmediata,
     required this.actividadesRealizar,
+    required this.idContratante,
   });
 
   factory PublicacionGenerada.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class PublicacionGenerada {
       nombreProvincia: json['publicacionempleo']['parroquia']['canton']['provincia']['nombre'] ?? '',
       disponibilidadInmediata: json['publicacionempleo']['disponibilidad_inmediata'] ?? false,
       actividadesRealizar: json['publicacionempleo']['actividades_realizar'] ?? 'No especificado',
+      idContratante: json['contratante']['id'] ?? 0,
     );
   }
 

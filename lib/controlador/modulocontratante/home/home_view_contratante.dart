@@ -13,9 +13,9 @@ class HomeViewContratante extends StatefulWidget {
 class _HomeViewContratanteState extends State<HomeViewContratante> {
   late Future<List<dynamic>> _publicacionesFuture;
   final Color _primaryColor = Colors.white;
-  final Color _cardColor = const Color(0xFFF8F9FA);
-  final Color _accentColor = const Color(0xFF0A2647);
+  final Color _accentColor = const Color(0xFF0A2647); // Azul oscuro
   final Color _textColor = Colors.black87;
+  final Color _secondaryTextColor = Colors.grey[700]!;
 
   @override
   void initState() {
@@ -34,119 +34,210 @@ class _HomeViewContratanteState extends State<HomeViewContratante> {
     return Scaffold(
       backgroundColor: _primaryColor,
       appBar: AppBar(
-        title: Center(
-          child: const Text(
-            'Mis Publicaciones',
-            style: TextStyle(color: Colors.white),
+        title: const Text(
+          'Mis Publicaciones',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
+        centerTitle: true,
         backgroundColor: _accentColor,
-        elevation: 2,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh, size: 24),
             onPressed: _refreshData,
+            tooltip: 'Actualizar',
           ),
         ],
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FutureBuilder<List<dynamic>>(
           future: _publicacionesFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0A2647)),
+                ),
+              );
             } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.red)));
+              return Center(
+                child: Text(
+                  'Error al cargar las publicaciones',
+                  style: TextStyle(
+                    color: Colors.red[700],
+                    fontSize: 16,
+                  ),
+                ),
+              );
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No hay publicaciones disponibles', style: TextStyle(color: _textColor)));
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.work_outline,
+                      size: 60,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No hay publicaciones disponibles',
+                      style: TextStyle(
+                        color: _secondaryTextColor,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              );
             } else {
-              return ListView.builder(
+              return ListView.separated(
                 itemCount: snapshot.data!.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   var publicacion = snapshot.data![index];
                   var empleo = publicacion['publicacionempleo'];
                   var parroquia = empleo['parroquia'];
                   var ubicacion = '${parroquia['nombre']}, ${parroquia['canton']['nombre']}';
 
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    color: _cardColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 2,
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: Colors.grey[200]!,
+                        width: 1,
+                      ),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Encabezado con color azul oscuro
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _accentColor,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
+                            ),
+                          ),
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
                                 child: Text(
                                   empleo['titulo'],
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: _textColor,
+                                    color: Colors.white,
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               _buildEstadoChip(empleo['estado']),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            empleo['descripcion'],
-                            style: TextStyle(color: _textColor.withOpacity(0.8)),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildInfoRow(Icons.work, 'Jornada: ${empleo['jornada']}'),
-                          _buildInfoRow(Icons.attach_money, 'Salario: \$${empleo['salario_estimado']}'),
-                          _buildInfoRow(Icons.location_on, 'Ubicación: $ubicacion'),
-                          _buildInfoRow(
-                            Icons.access_time,
-                            'Disponibilidad: ${empleo['disponibilidad_inmediata'] ? 'Inmediata' : 'Programada'}',
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        ),
+
+                        // Contenido de la publicación
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              OutlinedButton.icon(
-                                icon: const Icon(Icons.edit, size: 18),
-                                label: const Text('Editar'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _accentColor,
-                                  side: BorderSide(color: _accentColor),
+                              Text(
+                                empleo['descripcion'],
+                                style: TextStyle(
+                                  color: _textColor,
+                                  fontSize: 14,
+                                  height: 1.5,
                                 ),
-                                onPressed: () {
-                                  // Lógica para editar
-                                },
                               ),
-                              ElevatedButton.icon(
-                                icon: Icon(
-                                  empleo['estado'] == 'Activo' ? Icons.toggle_on : Icons.toggle_off,
-                                  size: 18,
-                                  color: empleo['estado'] == 'Activo' ? Colors.green : Colors.red,
+                              const SizedBox(height: 16),
+
+                              // Información detallada
+                              _buildDetailItem(
+                                icon: Icons.work_outline,
+                                title: 'Jornada',
+                                value: empleo['jornada'],
+                              ),
+                              _buildDetailItem(
+                                icon: Icons.attach_money,
+                                title: 'Salario estimado',
+                                value: '\$${empleo['salario_estimado']}',
+                              ),
+                              _buildDetailItem(
+                                icon: Icons.location_on,
+                                title: 'Ubicación',
+                                value: ubicacion,
+                              ),
+                              _buildDetailItem(
+                                icon: Icons.calendar_today,
+                                title: 'Disponibilidad',
+                                value: empleo['disponibilidad_inmediata']
+                                    ? 'Inmediata'
+                                    : 'Programada',
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Botón de activar/desactivar
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  icon: Icon(
+                                    empleo['estado'] == 'Activo'
+                                        ? Icons.toggle_on
+                                        : Icons.toggle_off,
+                                    color: Colors.white,
+                                  ),
+                                  label: Text(
+                                    empleo['estado'] == 'Activo'
+                                        ? 'DESACTIVAR PUBLICACIÓN'
+                                        : 'ACTIVAR PUBLICACIÓN',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: empleo['estado'] == 'Activo'
+                                        ? Colors.red[700]
+                                        : Colors.green[700],
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    _cambiarEstadoPublicacion(
+                                      publicacion['id_genera'],
+                                      empleo['estado'],
+                                    );
+                                  },
                                 ),
-                                label: Text(
-                                  empleo['estado'] == 'Activo' ? 'Desactivar' : 'Activar',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: empleo['estado'] == 'Activo' ? Colors.red : Colors.green,
-                                ),
-                                onPressed: () {
-                                  _cambiarEstadoPublicacion(publicacion['id_genera'], empleo['estado']);
-                                },
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -158,31 +249,65 @@ class _HomeViewContratanteState extends State<HomeViewContratante> {
     );
   }
 
-
-
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildDetailItem({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: _textColor.withOpacity(0.6)),
-          const SizedBox(width: 8),
-          Text(text, style: TextStyle(color: _textColor.withOpacity(0.8))),
+          Icon(
+            icon,
+            size: 20,
+            color: _accentColor,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: _secondaryTextColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: _textColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildEstadoChip(String estado) {
-    return Chip(
-      label: Text(
-        estado,
-        style: const TextStyle(fontSize: 12, color: Colors.white),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: estado == 'Activo' ? Colors.green[700] : Colors.red[700],
+        borderRadius: BorderRadius.circular(20),
       ),
-      backgroundColor: estado == 'Activo' ? Colors.green : Colors.red,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+      child: Text(
+        estado.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -193,14 +318,35 @@ class _HomeViewContratanteState extends State<HomeViewContratante> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar cambio'),
-        content: Text('¿Cambiar estado a $nuevoEstado?'),
+        title: Text(
+          'Confirmar cambio',
+          style: TextStyle(
+            color: _accentColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          '¿Estás seguro que deseas cambiar el estado a "$nuevoEstado"?',
+          style: TextStyle(color: _textColor),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: _accentColor),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _accentColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: () async {
               Navigator.pop(context);
               try {
@@ -208,25 +354,40 @@ class _HomeViewContratanteState extends State<HomeViewContratante> {
                 _refreshData();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Estado cambiado a $nuevoEstado'),
-                    backgroundColor: Colors.green,
+                    content: Text(
+                      'Estado cambiado a $nuevoEstado',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.green[700],
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Error: ${e.toString()}'),
-                    backgroundColor: Colors.red,
+                    content: Text(
+                      'Error: ${e.toString()}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.red[700],
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 );
               }
             },
-            child: const Text('Confirmar'),
+            child: const Text(
+              'Confirmar',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
   }
-
-
 }

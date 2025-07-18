@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:calma/controlador/modulocontratante/navigation/bottom_nav_bar_contratante.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
   bool _isRecoveryLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
@@ -121,7 +123,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-
   Future<void> _handleRecovery() async {
     final email = _recoveryEmailController.text.trim();
 
@@ -134,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final userResponse = await http.get(
-        Uri.parse('http://192.168.0.103:8090/api/usuarios/por-correo?correo=$email'),
+        Uri.parse('http://172.28.192.1:8090/api/usuarios/por-correo?correo=$email'),
       );
 
       if (userResponse.statusCode != 200) {
@@ -146,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final userType = userData['userType'];
 
       final resetResponse = await http.post(
-        Uri.parse('http://192.168.0.103:8090/api/password/request-reset'),
+        Uri.parse('http://172.28.192.1:8090/api/password/request-reset'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {'userId': userId.toString(), 'userType': userType},
       );
@@ -220,82 +221,210 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label) => InputDecoration(
-    labelText: label,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-  );
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xfff5f7fa),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Card(
-            elevation: 8,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'CALMA',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Inicia sesión para continuar',
-                    style: GoogleFonts.montserrat(fontSize: 16),
-                  ),
-                  const SizedBox(height: 25),
-                  TextField(
-                    controller: _emailController,
-                    decoration: _inputDecoration('Correo'),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: _inputDecoration('Contraseña'),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0A2647),
+              Color(0xFF144272),
+              Color(0xFF205295),
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Título
+                Column(
+                  children: [
+                    Text(
+                      'CALMA',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 1.5,
                       ),
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Iniciar sesión'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Inicia sesión para continuar',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 40),
+
+                // Formulario de login
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: _showRecoveryDialog,
-                    child: const Text('¿Olvidaste tu contraseña?'),
+                  child: Column(
+                    children: [
+                      // Campo de email
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: _buildInputDecoration(
+                          icon: Icons.email_outlined,
+                          label: 'Correo Electrónico',
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        style: GoogleFonts.montserrat(),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Campo de contraseña
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: _buildInputDecoration(
+                          icon: Icons.lock_outline,
+                          label: 'Contraseña',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                        style: GoogleFonts.montserrat(),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Olvidé contraseña
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _showRecoveryDialog,
+                          child: Text(
+                            '¿Olvidaste tu contraseña?',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 14,
+                              color: const Color(0xFF205295),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Botón de login - Destacado con texto blanco
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleLogin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0A2647),
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 5,
+                            shadowColor: Colors.black.withOpacity(0.3),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                              : Text(
+                            'INICIAR SESIÓN',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                              color: Colors.white, // Texto en blanco
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Registro
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/registro');
+                        },
+                        child: Text(
+                          '¿No tienes cuenta? Regístrate aquí',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 14,
+                            color: const Color(0xFF205295),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/registro');
-                    },
-                    child: const Text('¿No tienes cuenta? Regístrate aquí'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration({
+    required IconData icon,
+    required String label,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.montserrat(
+        color: Colors.grey,
+      ),
+      prefixIcon: Icon(icon, color: const Color(0xFF0A2647)),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF0A2647), width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
     );
   }
 }

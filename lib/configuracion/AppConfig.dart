@@ -1,7 +1,7 @@
 
 
 class AppConfig {
-  static const String baseUrl = 'http://192.168.0.103:8090';
+  static const String baseUrl = 'http://172.28.192.1:8090';
 
   static const String loginEndpoint = '/api/login/auth';
   static const String perfilContratanteEndpoint = '/api/registro/contratante/detalle-completo';
