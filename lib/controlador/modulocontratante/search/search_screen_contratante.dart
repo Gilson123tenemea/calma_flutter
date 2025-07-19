@@ -20,16 +20,7 @@ class _SearchScreenContratanteState extends State<SearchScreenContratante> {
   }
 
   Future<void> obtenerNotificaciones() async {
-    try {
-      final service = NotificacionesService();
-      notificaciones = await service.obtenerNotificacionesContratante(widget.specificId);
-    } catch (e) {
-      print(e);
-    } finally {
-      setState(() {
-        loading = false;
-      });
-    }
+
   }
 
   @override

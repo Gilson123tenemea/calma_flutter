@@ -386,186 +386,92 @@ class HomeView extends StatelessWidget {
   }
 
   void _postularse(BuildContext context, PublicacionGenerada publicacion, int idAspirante) async {
-    final confirmar = await showDialog(
+    // Mostrar diálogo de confirmación
+    final confirmar = await showDialog<bool>(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        elevation: 5,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.help_outline,
-                size: 40,
-                color: const Color(0xFF0E1E3A),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Confirmar postulación',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: const Color(0xFF0E1E3A),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                '¿Estás seguro que deseas postularte a este empleo?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF0E1E3A)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                    ),
-                    child: const Text(
-                      'Cancelar',
-                      style: TextStyle(color: Color(0xFF0E1E3A)),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0E1E3A),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-
-                    ),
-
-                    child: const Text(
-                      'Postularme',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Postulación'),
+        content: const Text('¿Estás seguro que deseas postularte a este empleo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
           ),
-        ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Postularme'),
+          ),
+        ],
       ),
     );
 
     if (confirmar != true) return;
 
+    // Mostrar indicador de carga
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Center(
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                blurRadius: 10,
-                spreadRadius: 3,
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF0E1E3A)),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Procesando postulación...',
-                style: TextStyle(
-                  color: const Color(0xFF0E1E3A),
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
 
     try {
+      // 1. Realizar la postulación
       final realizarService = RealizarService();
-      final result = await realizarService.postularAEmpleo(
-        idAspirante, // Asegúrate de tener el idAspirante disponible
-        publicacion.idGenera,
-      );
+      final resultado = await realizarService.postularAEmpleo(idAspirante, publicacion.idGenera);
 
-      Navigator.of(context).pop(); // Cerrar el diálogo de progreso
+      if (resultado['success'] == true) {
+        // 2. Obtener datos para la notificación
+        final postulacionData = resultado['data'];
+        final nombreAspirante = '${postulacionData['aspirante']['usuario']['nombres']} ${postulacionData['aspirante']['usuario']['apellidos']}';
+        final idPostulacion = postulacionData['postulacion']['id_postulacion'];
 
-      if (result['success'] == true) {
-        // Enviar la notificación
-        await enviarNotificacion(publicacion.idContratante, publicacion.titulo, 'Nombre del Aspirante'); // Asegúrate de pasar el nombre correcto
+        // 3. Crear y enviar notificación al contratante
+        final notificacion = Notificaciones(
+          descripcion: 'El aspirante $nombreAspirante ha postulado a: ${publicacion.titulo}',
+          idContratante: publicacion.idContratante,
+          idAspirante: idAspirante,
+          idPostulacion: idPostulacion,
+          fecha: DateTime.now(),
+        );
 
+        final notificacionService = NotificacionesService();
+        await notificacionService.crearNotificacion(notificacion);
+
+        // 4. Mostrar feedback al usuario
+        Navigator.of(context).pop(); // Cerrar diálogo de carga
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('¡Postulación exitosa!'),
+          const SnackBar(
+            content: Text('¡Postulación exitosa!'),
             backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
           ),
         );
+
+        // 5. Opcional: Actualizar la lista de publicaciones
+
       } else {
+        Navigator.of(context).pop(); // Cerrar diálogo de carga
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ?? 'Error al postular'),
+            content: Text(resultado['message'] ?? 'Error al postular'),
             backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
           ),
         );
       }
-    } catch (error) {
-      Navigator.of(context).pop(); // Cerrar el diálogo de progreso
+    } catch (e) {
+      Navigator.of(context).pop(); // Cerrar diálogo de carga
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error inesperado: ${error.toString()}'),
+          content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
         ),
       );
     }
   }
 
   Future<void> enviarNotificacion(int idContratante, String tituloPublicacion, String nombreAspirante) async {
-    final notificacionService = NotificacionesService();
-    String mensaje = 'El aspirante "$nombreAspirante" ha postulado a: "$tituloPublicacion"';
 
-    Notificaciones notificacion = Notificaciones(
-      mensaje: mensaje,
-      idContratante: idContratante,
-    );
-
-    try {
-      await notificacionService.crear(notificacion);
-      print('Notificación enviada exitosamente.');
-    } catch (e) {
-      print('Error al enviar la notificación: $e');
-    }
   }
 
 

@@ -3,117 +3,72 @@ import 'package:calma/configuracion/AppConfig.dart';
 import 'package:http/http.dart' as http;
 
 class Notificaciones {
-  final String mensaje;
-  final int idContratante;
+  final int? id;
+  final String descripcion;
+  final int? idContratante;
+  final int? idAspirante;
+  final int? idPostulacion;
+  final bool leida;
+  final DateTime fecha;
 
   Notificaciones({
-    required this.mensaje,
-    required this.idContratante,
+    this.id,
+    required this.descripcion,
+    this.idContratante,
+    this.idAspirante,
+    this.idPostulacion,
+    this.leida = false,
+    required this.fecha,
   });
+
+  factory Notificaciones.fromJson(Map<String, dynamic> json) {
+    return Notificaciones(
+      id: json['id'],
+      descripcion: json['descripcion'],
+      idContratante: json['contratante'] != null ? json['contratante']['idContratante'] : null,
+      idAspirante: json['aspirante'] != null ? json['aspirante']['idAspirante'] : null,
+      idPostulacion: json['postulacion'] != null ? json['postulacion']['id_postulacion'] : null,
+      leida: json['leida'] ?? false,
+      fecha: DateTime.parse(json['fecha']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'descripcion': descripcion,
+      if (idContratante != null) 'contratante': {'idContratante': idContratante},
+      if (idAspirante != null) 'aspirante': {'idAspirante': idAspirante},
+      if (idPostulacion != null) 'postulacion': {'id_postulacion': idPostulacion},
+      'leida': leida,
+      'fecha': fecha.toIso8601String(),
+    };
+  }
 }
 
 class NotificacionesService {
-  // Obtener todas las notificaciones de un aspirante
-  Future<List<dynamic>> obtenerNotificacionesAspirante(int aspiranteId) async {
-    final url = '${AppConfig.baseUrl}/api/notificaciones/aspirante/$aspiranteId';
+  final String baseUrl = AppConfig.baseUrl;
 
-    final response = await http.get(Uri.parse(url));
+  Future<Notificaciones> crearNotificacion(Notificaciones notificacion) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones');
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Error al cargar las notificaciones');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(notificacion.toJson()),
+      );
+
+      if (response.statusCode == 201) {
+        return Notificaciones.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Error al crear notificación: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
     }
   }
 
-  // Obtener todas las notificaciones de un contratante
-  Future<List<dynamic>> obtenerNotificacionesContratante(int contratanteId) async {
-    final url = '${AppConfig.baseUrl}/api/notificaciones/contratante/$contratanteId';
 
-    final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Error al cargar las notificaciones del contratante');
-    }
-  }
-
-  // Obtener notificaciones no leídas de un aspirante
-  Future<List<dynamic>> obtenerNoLeidasAspirante(int aspiranteId) async {
-    final url = '${AppConfig.baseUrl}/api/notificaciones/aspirante/noleidas/$aspiranteId';
-
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Error al cargar las notificaciones no leídas');
-    }
-  }
-
-  // Obtener notificaciones no leídas de un contratante
-  Future<List<dynamic>> obtenerNoLeidasContratante(int contratanteId) async {
-    final url = '${AppConfig.baseUrl}/api/notificaciones/contratante/noleidas/$contratanteId';
-
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Error al cargar las notificaciones no leídas del contratante');
-    }
-  }
-
-  // Marcar notificación como leída
-  Future<void> marcarLeida(int notificacionId) async {
-    final url = '${AppConfig.baseUrl}/api/notificaciones/leida/$notificacionId';
-
-    final response = await http.put(Uri.parse(url));
-
-    if (response.statusCode != 200) {
-      throw Exception('Error al marcar la notificación como leída');
-    }
-  }
-
-  // Marcar todas las notificaciones como leídas para un aspirante
-  Future<void> marcarTodasLeidasAspirante(int aspiranteId) async {
-    final url = '${AppConfig.baseUrl}/api/notificaciones/aspirante/marcar-leidas/$aspiranteId';
-
-    final response = await http.put(Uri.parse(url));
-
-    if (response.statusCode != 200) {
-      throw Exception('Error al marcar todas las notificaciones como leídas');
-    }
-  }
-
-  // Marcar todas las notificaciones como leídas para un contratante
-  Future<void> marcarTodasLeidasContratante(int contratanteId) async {
-    final url = '${AppConfig.baseUrl}/api/notificaciones/contratante/marcar-leidas/$contratanteId';
-
-    final response = await http.put(Uri.parse(url));
-
-    if (response.statusCode != 200) {
-      throw Exception('Error al marcar todas las notificaciones del contratante como leídas');
-    }
-  }
-
-  Future<void> crear(Notificaciones notificacion) async {
-    final url = '${AppConfig.baseUrl}/api/notificaciones';
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'mensaje': notificacion.mensaje,
-        'idContratante': notificacion.idContratante,
-        // Agrega otros campos si es necesario
-      }),
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception('Error al crear la notificación');
-    }
-  }
+// ... otros métodos
 }

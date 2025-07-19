@@ -4,27 +4,43 @@ import 'package:http/http.dart' as http;
 
 class RealizarService {
   Future<Map<String, dynamic>> postularAEmpleo(
-      int idAspirante, int idPublicacion) async {
-    final url = Uri.parse('${AppConfig.baseUrl}/api/realizar/postular?'
-        'idAspirante=$idAspirante&idPublicacionEmpleo=$idPublicacion');
+      int idAspirante, int idPublicacion,
+      ) async {
+    if (idAspirante <= 0 || idPublicacion <= 0) {
+      return {
+        'success': false,
+        'message': 'IDs inválidos',
+      };
+    }
+
+    final url = Uri.parse(
+      '${AppConfig.baseUrl}/api/realizar/postular?'
+          'idAspirante=$idAspirante&idPublicacionEmpleo=$idPublicacion',
+    );
 
     try {
-      final response = await http.post(url);
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => http.Response(
+          '{"message": "Tiempo de espera agotado"}',
+          408,
+        ),
+      );
+
+      final responseBody = json.decode(response.body);
 
       if (response.statusCode == 200) {
         return {
           'success': true,
-          'data': json.decode(response.body),
-        };
-      } else if (response.statusCode == 409) {
-        return {
-          'success': false,
-          'message': 'Ya te has postulado a esta oferta.',
+          'data': responseBody,
         };
       } else {
         return {
           'success': false,
-          'message': 'Error al postular: ${response.statusCode}',
+          'message': responseBody['message'] ?? 'Error al postular: ${response.statusCode}',
         };
       }
     } catch (e) {
@@ -34,6 +50,7 @@ class RealizarService {
       };
     }
   }
+
   Future<Map<String, dynamic>> getPostulacionesPorAspirante(int idAspirante) async {
     final url = Uri.parse(AppConfig.getPostulacionesPorAspiranteUrl(idAspirante));
 
