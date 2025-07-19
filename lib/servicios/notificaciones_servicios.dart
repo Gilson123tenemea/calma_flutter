@@ -182,6 +182,25 @@ class NotificacionesService {
       throw Exception('Error de conexión: $e');
     }
   }
+  Future<int> obtenerCantidadNoLeidasAspirante(int idAspirante) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/aspirante/noleidas/$idAspirante');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> body = json.decode(response.body);
+        return body.length; // Retorna la cantidad de notificaciones no leídas
+      } else {
+        throw Exception('Error al cargar notificaciones no leídas: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
 
 
 }

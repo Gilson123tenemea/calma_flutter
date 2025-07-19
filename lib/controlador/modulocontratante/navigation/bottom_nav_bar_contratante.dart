@@ -6,7 +6,7 @@ import '../search/search_screen_contratante.dart';
 import '../profile/profile_screen_contratante.dart';
 
 class GoogleBottomBarContratante extends StatefulWidget {
-  final int specificId; // Agrega este parámetro
+  final int specificId;
 
   const GoogleBottomBarContratante({super.key, required this.specificId});
 
@@ -17,6 +17,8 @@ class GoogleBottomBarContratante extends StatefulWidget {
 class _GoogleBottomBarContratanteState extends State<GoogleBottomBarContratante> {
   int _selectedIndex = 0;
   late List<Widget> _screens;
+
+
 
   @override
   void initState() {
