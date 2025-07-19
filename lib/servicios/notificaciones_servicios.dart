@@ -68,9 +68,120 @@ class NotificacionesService {
     }
   }
 
+  Future<List<Notificaciones>> obtenerNotificacionesContratante(int idContratante) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/contratante/$idContratante');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> body = json.decode(response.body);
+        return body.map((json) => Notificaciones.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar notificaciones: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  // Marcar todas como leídas
+  Future<void> marcarTodasLeidasContratante(int idContratante) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/contratante/marcar-leidas/$idContratante');
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error al marcar notificaciones: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  // Marcar una notificación como leída
+  Future<void> marcarComoLeida(int idNotificacion) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/leida/$idNotificacion');
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error al marcar notificación: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  Future<List<Notificaciones>> obtenerNotificacionesAspirante(int idAspirante) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/aspirante/$idAspirante');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> body = json.decode(response.body);
+        return body.map((json) => Notificaciones.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar notificaciones: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  // 2. Obtener notificaciones no leídas del aspirante
+  Future<List<Notificaciones>> obtenerNoLeidasAspirante(int idAspirante) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/aspirante/noleidas/$idAspirante');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> body = json.decode(response.body);
+        return body.map((json) => Notificaciones.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar notificaciones no leídas: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  // 3. Marcar todas como leídas para aspirante
+  Future<void> marcarTodasLeidasAspirante(int idAspirante) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/aspirante/marcar-leidas/$idAspirante');
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error al marcar notificaciones: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
 
 
-
-
-// ... otros métodos
 }
