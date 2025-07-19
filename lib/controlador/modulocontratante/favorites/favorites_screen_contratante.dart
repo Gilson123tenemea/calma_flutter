@@ -52,13 +52,14 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
     }
   }
 
-  Future<void> _handleAceptar(int postulacionId, int idAspirante) async {
+  Future<void> _handleAceptar(int postulacionId, int idAspirante, String tituloPublicacion) async {
     try {
       final success = await _postulacionService.actualizarEstadoPostulacion(
         postulacionId: postulacionId,
-        contratanteId: widget.specificId, // Usamos el ID del contratante que viene como parámetro
+        contratanteId: widget.specificId,
         aspiranteId: idAspirante,
         estado: true,
+        tituloPublicacion: tituloPublicacion, // Pasa el título aquí
       );
 
       if (success) {
@@ -70,13 +71,14 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
     }
   }
 
-  Future<void> _handleRechazar(int postulacionId, int idAspirante) async {
+  Future<void> _handleRechazar(int postulacionId, int idAspirante, String tituloPublicacion) async {
     try {
       final success = await _postulacionService.actualizarEstadoPostulacion(
         postulacionId: postulacionId,
         contratanteId: widget.specificId,
         aspiranteId: idAspirante,
         estado: false,
+        tituloPublicacion: tituloPublicacion, // Pasa el título aquí
       );
 
       if (success) {
@@ -87,6 +89,7 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
       _showSnackbar('Error al rechazar postulación: ${e.toString()}');
     }
   }
+
 
   void _showSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -271,32 +274,47 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      // Botón Rechazar
                       OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                           side: const BorderSide(color: Colors.red),
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                         ),
-                        onPressed: () => _handleRechazar(
-                            postulacion['id_postulacion'],
-                            idAspirante
-                        ),
+                        onPressed: postulacion['estado'] == null // Solo si está pendiente
+                            ? () => _handleRechazar(
+                          postulacion['id_postulacion'],
+                          idAspirante,
+                          empleo['titulo'],
+                        )
+                            : null, // Deshabilitar si ya fue aceptada/rechazada
                         child: const Text('Rechazar'),
                       ),
+
                       const SizedBox(width: 16),
+
+                      // Botón Aceptar
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _accentColor,
+                          backgroundColor: postulacion['estado'] == null
+                              ? _accentColor
+                              : Colors.grey, // Cambiar color si está deshabilitado
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                         ),
-                        onPressed: () => _handleAceptar(
-                            postulacion['id_postulacion'],
-                            idAspirante
-                        ),
+                        onPressed: postulacion['estado'] == null // Solo si está pendiente
+                            ? () => _handleAceptar(
+                          postulacion['id_postulacion'],
+                          idAspirante,
+                          empleo['titulo'],
+                        )
+                            : null, // Deshabilitar si ya fue aceptada/rechazada
                         child: const Text('Aceptar'),
                       ),
+
                       const SizedBox(width: 16),
+
+                      // Botón Ver CV (siempre activo)
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _accentColor,
