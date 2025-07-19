@@ -88,7 +88,6 @@ class NotificacionesService {
     }
   }
 
-  // Marcar todas como leídas
   Future<void> marcarTodasLeidasContratante(int idContratante) async {
     final url = Uri.parse('$baseUrl/api/notificaciones/contratante/marcar-leidas/$idContratante');
 
@@ -106,7 +105,6 @@ class NotificacionesService {
     }
   }
 
-  // Marcar una notificación como leída
   Future<void> marcarComoLeida(int idNotificacion) async {
     final url = Uri.parse('$baseUrl/api/notificaciones/leida/$idNotificacion');
 
@@ -144,7 +142,6 @@ class NotificacionesService {
     }
   }
 
-  // 2. Obtener notificaciones no leídas del aspirante
   Future<List<Notificaciones>> obtenerNoLeidasAspirante(int idAspirante) async {
     final url = Uri.parse('$baseUrl/api/notificaciones/aspirante/noleidas/$idAspirante');
 
@@ -165,7 +162,6 @@ class NotificacionesService {
     }
   }
 
-  // 3. Marcar todas como leídas para aspirante
   Future<void> marcarTodasLeidasAspirante(int idAspirante) async {
     final url = Uri.parse('$baseUrl/api/notificaciones/aspirante/marcar-leidas/$idAspirante');
 
@@ -193,7 +189,47 @@ class NotificacionesService {
 
       if (response.statusCode == 200) {
         final List<dynamic> body = json.decode(response.body);
-        return body.length; // Retorna la cantidad de notificaciones no leídas
+        return body.length;
+      } else {
+        throw Exception('Error al cargar notificaciones no leídas: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  Future<List<Notificaciones>> obtenerNoLeidasContratante(int idContratante) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/contratante/noleidas/$idContratante');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> body = json.decode(response.body);
+        return body.map((json) => Notificaciones.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar notificaciones no leídas: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  Future<int> obtenerCantidadNoLeidasContratante(int idContratante) async {
+    final url = Uri.parse('$baseUrl/api/notificaciones/contratante/noleidas/$idContratante');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> body = json.decode(response.body);
+        return body.length;
       } else {
         throw Exception('Error al cargar notificaciones no leídas: ${response.statusCode}');
       }
