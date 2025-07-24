@@ -35,4 +35,5 @@ class AppConfig {
       '$baseUrl/api/realizar/aspirante/$idAspirante';
   //link de registrar token
   static String get registrarDispositivoUrl => '$baseUrl/api/dispositivos';
+  static String get notificacionpushpostulacion => '$baseUrl/api/dispositivos/enviar-push';
 }

@@ -13,6 +13,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -27,6 +28,7 @@ android {
         versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
         multiDexEnabled = true
+
     }
 
     buildTypes {
@@ -42,8 +44,12 @@ android {
     }
     dependencies {
         implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
-        implementation("com.google.firebase:firebase-messaging-ktx")
+        implementation("com.google.firebase:firebase-messaging-ktx:23.4.0")
         implementation("androidx.core:core-ktx:1.12.0")
+        implementation("androidx.work:work-runtime-ktx:2.8.1")
+        coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+
     }
     subprojects {
         afterEvaluate {
