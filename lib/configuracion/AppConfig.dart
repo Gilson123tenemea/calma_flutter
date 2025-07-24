@@ -33,4 +33,6 @@ class AppConfig {
       '$baseUrl$postulacionEndpoint/actualizar/$postulacionId/$contratanteId/$aspiranteId';
   static String getPostulacionesPorAspiranteUrl(int idAspirante) =>
       '$baseUrl/api/realizar/aspirante/$idAspirante';
+  //link de registrar token
+  static String get registrarDispositivoUrl => '$baseUrl/api/dispositivos';
 }

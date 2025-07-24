@@ -1,3 +1,4 @@
+import 'package:calma/servicios/auth_service.dart';
 import 'package:calma/servicios/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -66,7 +67,23 @@ class _ProfileScreenContratanteState extends State<ProfileScreenContratante> {
             TextButton(
               child: const Text('Sí, cerrar sesión', style: TextStyle(color: Colors.red)),
               onPressed: () async {
-                await SessionService().clearSession();
+                // Obtener el token FCM antes de limpiar la sesión
+                final session = await SessionService().getSession();
+                final fcmToken = session['fcmToken'] as String?;
+
+                // Llamar al servicio de logout
+                await AuthService.logout();
+
+                // Eliminar el token del backend si existe
+                if (fcmToken != null) {
+                  try {
+                    await http.delete(
+                      Uri.parse('${AppConfig.baseUrl}/api/dispositivos/$fcmToken'),
+                    );
+                  } catch (e) {
+                    debugPrint('Error eliminando token FCM: $e');
+                  }
+                }
 
                 if (mounted) {
                   Navigator.of(context).pushAndRemoveUntil(
