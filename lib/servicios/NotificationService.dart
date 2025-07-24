@@ -1,58 +1,106 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:calma/configuracion/AppConfig.dart';
+import 'package:calma/servicios/session_service.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final SessionService _sessionService = SessionService();
 
-  // Función para inicializar las notificaciones
   Future<void> initialize() async {
-    // Solicitar permisos (para iOS/macOS)
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+    // 1. Solicitar permisos (iOS/macOS)
+    final settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
-      provisional: false, // Puedes cambiarlo a true para permisos provisionales
+      provisional: false,
     );
 
-    print('Permisos de usuario: ${settings.authorizationStatus}');
+    debugPrint('Permisos de notificaciones: ${settings.authorizationStatus}');
 
-    // Obtener el token FCM
-    await _getFCMToken();
+    // 2. Configurar manejadores de notificaciones
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedApp);
 
-    // Escuchar actualizaciones del token
-    _firebaseMessaging.onTokenRefresh.listen(_saveTokenToDatabase);
+    // 3. Obtener y registrar token inicial
+    await handleTokenRegistration();
+
+    // 4. Escuchar cambios en el token
+    _firebaseMessaging.onTokenRefresh.listen(handleTokenRegistration);
   }
 
-  // Función para obtener el token FCM
-  Future<String?> _getFCMToken() async {
-    try {
-      // Para web necesitarías pasar el vapidKey, para móvil no es necesario
-      String? token = await _firebaseMessaging.getToken();
+  Future<void> handleTokenRegistration([String? newToken]) async {
 
-      if (token != null) {
-        print('FCM Token: $token');
-        _saveTokenToDatabase(token);
-      } else {
-        print('No se pudo obtener el token FCM');
+
+    try {
+      final token = newToken ?? await _firebaseMessaging.getToken();
+      if (token == null) return;
+
+      debugPrint('Token FCM obtenido: $token');
+
+      final session = await _sessionService.getSession();
+      final userId = session['userId'];
+      if (userId == 0) {
+        debugPrint('No hay usuario logueado, token no se enviará al backend');
+        return;
       }
 
-      return token;
+      await _registerTokenWithBackend(token, userId);
     } catch (e) {
-      print('Error al obtener el token FCM: $e');
-      return null;
+      debugPrint('Error en manejo de token: $e');
     }
   }
 
-  // Función para guardar el token en tu base de datos (debes implementarla)
-  void _saveTokenToDatabase(String token) {
-    // Aquí deberías enviar el token a tu servidor para guardarlo
-    // Ejemplo: hacer una petición HTTP a tu backend
-    print('Token para guardar en tu base de datos: $token');
 
-    // Implementa la lógica para enviar el token a tu servidor
-    // Ejemplo:
-    // await http.post(
-    //   Uri.parse('https://tuservidor.com/guardar-token'),
-    //   body: {'token': token, 'userId': '123'},
-    // );
+  Future<void> _registerTokenWithBackend(String token, int userId) async {
+    try {
+      final platform = _getPlatform();
+      final url = Uri.parse('${AppConfig.baseUrl}/api/dispositivos');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': userId.toString(),
+        },
+        body: jsonEncode({
+          'token': token,
+          'plataforma': platform,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('Token registrado exitosamente en el backend');
+      } else {
+        debugPrint('Error registrando token: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Excepción al registrar token: $e');
+    }
+  }
+
+  String _getPlatform() {
+    if (defaultTargetPlatform == TargetPlatform.android) return 'android';
+    if (defaultTargetPlatform == TargetPlatform.iOS) return 'ios';
+    return 'unknown';
+  }
+
+  void _handleForegroundMessage(RemoteMessage message) {
+    debugPrint('Notificación recibida en primer plano:');
+    debugPrint('Título: ${message.notification?.title}');
+    debugPrint('Cuerpo: ${message.notification?.body}');
+    debugPrint('Datos: ${message.data}');
+
+    // Aquí puedes mostrar una notificación local o actualizar la UI
+  }
+
+  void _handleOpenedApp(RemoteMessage message) {
+    debugPrint('App abierta desde notificación:');
+    debugPrint('Datos: ${message.data}');
+
+    // Navegar a la pantalla correspondiente basada en message.data
   }
 }

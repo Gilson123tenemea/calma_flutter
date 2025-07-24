@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:calma/servicios/NotificationService.dart';
 import 'package:calma/servicios/session_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import '../configuracion/AppConfig.dart';
+
 
 class AuthService {
   static Future<Map<String, dynamic>> login(String correo, String contrasena) async {
@@ -22,6 +24,9 @@ class AuthService {
     if (response.statusCode == 200) {
       final rol = responseData['rol']?.toString()?.toLowerCase() ?? '';
       final usuarioId = _parseInt(responseData['usuarioId']);
+      final notificationService = NotificationService();
+      await notificationService.handleTokenRegistration();
+
 
       final specificId = rol == 'aspirante'
           ? _parseInt(responseData['aspiranteId'])
