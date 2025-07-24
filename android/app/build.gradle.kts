@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("com.google.gms.google-services")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -16,34 +16,34 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "11"
     }
 
+
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.calma"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
+        versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
-        targetSdk = 33
-        minSdk = 21
-        manifestPlaceholders["applicationName"] = "android.app.Application"
+        multiDexEnabled = true
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
     configurations.all {
         resolutionStrategy {
             force("androidx.core:core-ktx:1.12.0")
         }
+    }
+    dependencies {
+        implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
+        implementation("com.google.firebase:firebase-messaging-ktx")
+        implementation("androidx.core:core-ktx:1.12.0")
     }
     subprojects {
         afterEvaluate {

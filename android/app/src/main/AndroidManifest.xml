@@ -6,12 +6,23 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+
+
     <application
         android:requestLegacyExternalStorage="true"
 
         android:label="C A L M A"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        tools:replace="android:appComponentFactory"
+        android:appComponentFactory="whateverString">
+
+        >
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -32,9 +43,25 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+
     </application>
 
     <queries>

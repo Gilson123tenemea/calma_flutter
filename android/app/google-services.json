@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "741051087066",
+    "project_id": "calma-b9948",
+    "storage_bucket": "calma-b9948.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741051087066:android:d373964bfa279e53698de3",
+        "android_client_info": {
+          "package_name": "Calma_flutter.s"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDthJoexfC9810hXLhe30ldi3Y875aol_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741051087066:android:5545d073bfbe8fc4698de3",
+        "android_client_info": {
+          "package_name": "com.example.calma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDthJoexfC9810hXLhe30ldi3Y875aol_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
