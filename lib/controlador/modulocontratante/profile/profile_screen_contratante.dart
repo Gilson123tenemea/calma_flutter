@@ -139,7 +139,7 @@ class _ProfileScreenContratanteState extends State<ProfileScreenContratante> {
                 radius: 50,
                 backgroundColor: const Color(0xFF0A2647),
                 backgroundImage: contratanteData?['contratante']['foto'] != null
-                    ? NetworkImage(contratanteData?['contratante']['foto'])
+                    ? NetworkImage('${AppConfig.baseUrl}/api/registro/${contratanteData?['contratante']['foto']}')
                     : null,
                 child: contratanteData?['contratante']['foto'] == null
                     ? const Icon(Icons.person, size: 50, color: Colors.white)

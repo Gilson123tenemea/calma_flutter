@@ -1,4 +1,5 @@
 import 'package:calma/configuracion/AppConfig.dart';
+import 'package:calma/controlador/moduloaspirante/favorites/AsistenteIAScreen.dart';
 import 'package:calma/servicios/FichaPaciente.dart';
 import 'package:calma/servicios/FichaPacienteService.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +61,27 @@ class _FichaPacienteScreenState extends State<FichaPacienteScreen> {
     return null;
   }
 
+  void _abrirAsistenteIA() {
+    if (_fichaPaciente?.paciente != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AsistenteIAScreen(
+            idPaciente: widget.idPaciente,
+            nombrePaciente: _fichaPaciente!.paciente!.nombreCompleto ?? 'Paciente',
+          ),
+        ),
+      );
+    } else {
+      // Mostrar mensaje de error si no hay datos del paciente
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se puede acceder al asistente sin datos del paciente'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +218,7 @@ class _FichaPacienteScreenState extends State<FichaPacienteScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Header con información básica y foto
+          // Header con información básica y foto (MODIFICADO)
           _buildHeaderCard(),
           const SizedBox(height: 16),
 
@@ -470,6 +492,35 @@ class _FichaPacienteScreenState extends State<FichaPacienteScreen> {
         ),
         child: Column(
           children: [
+            // BOTÓN DE ASISTENTE IA - AGREGADO AQUÍ
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 20),
+              child: ElevatedButton.icon(
+                onPressed: _abrirAsistenteIA,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF0E1E3A),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                ),
+                icon: const Icon(
+                  Icons.smart_toy,
+                  size: 20,
+                ),
+                label: const Text(
+                  'Asistente IA',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
             // Foto del paciente o avatar por defecto
             Container(
               width: 100,
@@ -517,7 +568,6 @@ class _FichaPacienteScreenState extends State<FichaPacienteScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-
           ],
         ),
       ),

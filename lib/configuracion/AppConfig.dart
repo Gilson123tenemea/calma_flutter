@@ -14,7 +14,7 @@ class AppConfig {
   static const String descargarRecomendacionEndpoint = '/api/recomendaciones';
   static const String calificacionesCompletasEndpoint = '/api/cvs/aspirante';
   static const String fichaPacienteEndpoint = '/api/fichas';
-
+  static const String chatbotEndpoint = '/api/chatbot';
 
   static String get loginUrl => '$baseUrl$loginEndpoint';
   static String getPerfilContratanteUrl(int id) => '$baseUrl$perfilContratanteEndpoint/$id';
@@ -41,5 +41,7 @@ class AppConfig {
   static String get registrarDispositivoUrl => '$baseUrl/api/dispositivos';
   static String get notificacionpushpostulacion => '$baseUrl/api/dispositivos/enviar-push';
   static String getFichaPacienteUrl(int idPaciente) => '$baseUrl$fichaPacienteEndpoint/$idPaciente';
+  static String get recomendacionesCuidadoUrl => '$baseUrl$chatbotEndpoint/recomendaciones-cuidado';
+  static String get evaluacionRiesgosUrl => '$baseUrl$chatbotEndpoint/evaluacion-riesgos';
 
 }
