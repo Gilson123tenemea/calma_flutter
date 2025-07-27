@@ -7,7 +7,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import '../configuracion/AppConfig.dart';
 
-
 class AuthService {
   static Future<Map<String, dynamic>> login(String correo, String contrasena) async {
     try {
@@ -42,6 +41,9 @@ class AuthService {
           }
         }
 
+        // NUEVO: Solicitar notificaciones pendientes después del login exitoso
+        await _solicitarNotificacionesPendientes(rol, specificId);
+
         return {'success': true, 'rol': rol, 'userId': usuarioId, 'specificId': specificId};
       } else {
         throw Exception(jsonDecode(response.body)['message'] ?? 'Error desconocido');
@@ -52,9 +54,34 @@ class AuthService {
     }
   }
 
+  /// Solicita al backend que envíe las notificaciones pendientes
+  static Future<void> _solicitarNotificacionesPendientes(String rol, int specificId) async {
+    try {
+      debugPrint('🔔 Solicitando notificaciones pendientes para $rol ID: $specificId');
+
+      final response = await http.post(
+        Uri.parse('${AppConfig.baseUrl}/api/login/enviar-notificaciones-pendientes'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'rol': rol,
+          'specificId': specificId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        debugPrint('✅ Notificaciones pendientes solicitadas: ${responseData['message']}');
+      } else {
+        debugPrint('⚠️ Error al solicitar notificaciones pendientes: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error solicitando notificaciones pendientes: $e');
+      // No lanzamos el error para no interrumpir el flujo de login
+    }
+  }
+
   static Future<void> _registerTokenDirectly(
-      String token, String rol, int specificId, int userId
-      ) async {
+      String token, String rol, int specificId, int userId) async {
     try {
       final response = await http.post(
         Uri.parse(AppConfig.registrarDispositivoUrl),
@@ -70,6 +97,7 @@ class AuthService {
       if (response.statusCode != 200) {
         throw Exception('Error registrando token: ${response.body}');
       }
+      debugPrint('Token registrado exitosamente en el backend');
     } catch (e) {
       debugPrint('Error en _registerTokenDirectly: $e');
       rethrow;
@@ -85,11 +113,14 @@ class AuthService {
       // Eliminar registro del backend si existe token
       if (fcmToken != null) {
         try {
-          await http.delete(
+          final response = await http.delete(
             Uri.parse('${AppConfig.baseUrl}/api/dispositivos/$fcmToken'),
           );
+          if (response.statusCode == 204) {
+            debugPrint('Token eliminado del servidor exitosamente');
+          }
         } catch (e) {
-          debugPrint('Error eliminando token FCM: $e');
+          debugPrint('Error eliminando token FCM del servidor: $e');
         }
       }
 
@@ -98,6 +129,7 @@ class AuthService {
 
       // Opcional: eliminar token de FCM
       await FirebaseMessaging.instance.deleteToken();
+      debugPrint('Logout completado exitosamente');
     } catch (e) {
       debugPrint('Error durante logout: $e');
       rethrow;

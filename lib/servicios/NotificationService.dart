@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:calma/servicios/NotificationActionsService.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -18,8 +19,8 @@ class NotificationService {
     _initNotifications();
   }
 
-  Future<void> initializeNotifications() async {
-    // Configurar el canal de notificaciones para Android
+  Future<void> initialize() async {
+    // Configurar canal de notificaciones para Android
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'canal_notificaciones',
       'Notificaciones CALMA',
@@ -28,43 +29,40 @@ class NotificationService {
       playSound: true,
     );
 
-    // Crear el canal (solo necesario para Android 8.0+)
+    // Crear el canal
     await _localNotifications
         .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
-    // Configurar cómo manejar las notificaciones entrantes
-    FirebaseMessaging.onMessage.listen(showNotification);
+    // Configurar handlers
+    FirebaseMessaging.onMessage.listen(_showForegroundNotification);
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+
+    // Configurar inicialización para background
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 
-  Future<void> showNotification(RemoteMessage message) async {
-    final notification = message.notification;
-    final android = message.notification?.android;
-
-    // Configurar detalles para Android
-    final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+  Future<void> _showForegroundNotification(RemoteMessage message) async {
+    // Solo se ejecuta cuando la app está en primer plano
+    AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'canal_notificaciones',
       'Notificaciones CALMA',
       channelDescription: 'Canal para notificaciones importantes',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
-      enableVibration: true,
-      color: const Color(0xFF0A2647),
     );
 
-    final platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-    );
-
-    // Mostrar la notificación
     await _localNotifications.show(
       message.hashCode,
-      notification?.title ?? 'Nueva notificación',
-      notification?.body,
-      platformChannelSpecifics,
+      message.notification?.title ?? 'Nueva notificación',
+      message.notification?.body,
+      NotificationDetails(android: androidPlatformChannelSpecifics),
       payload: json.encode(message.data),
     );
   }
@@ -119,14 +117,55 @@ class NotificationService {
     );
   }
 
-  void _onNotificationClicked(NotificationResponse response) {
+
+  void _onNotificationClicked(NotificationResponse response) async {
     if (response.payload != null) {
       final data = json.decode(response.payload!);
       debugPrint("Notificación clickeada: $data");
-      // Aquí puedes manejar la navegación
+
+      // Procesar acción específica si existe
+      if (response.actionId != null) {
+        await NotificationActionsService.procesarAccionNotificacion(response.actionId!, data);
+        return;
+      }
+
+      // Manejar diferentes tipos de notificaciones
+      final String tipo = data['tipo'] ?? '';
+
+      switch (tipo) {
+        case 'notificacion_interna':
+          debugPrint("🔔 Navegando a notificaciones internas");
+          // Marcar como leída automáticamente al hacer clic
+          final notificacionId = data['notificacion_id'];
+          if (notificacionId != null) {
+            await NotificationActionsService.marcarNotificacionComoLeida(
+                int.parse(notificacionId.toString())
+            );
+          }
+          _navegarANotificaciones(data);
+          break;
+        case 'resumen_no_leidas':
+          debugPrint("📱 Navegando a resumen de no leídas");
+          _navegarANotificaciones(data);
+          break;
+        default:
+          debugPrint("🔄 Notificación genérica recibida");
+          break;
+      }
     }
   }
+  void _navegarANotificaciones(Map<String, dynamic> data) {
+    // Aquí puedes implementar la navegación específica
+    // Por ejemplo, usando un NavigatorKey global o un sistema de eventos
+    debugPrint("📍 Datos para navegación: $data");
 
+    // Ejemplo de cómo podrías manejar la navegación:
+    // if (data['usuario_tipo'] == 'aspirante') {
+    //   // Navegar a pantalla de notificaciones de aspirante
+    // } else if (data['usuario_tipo'] == 'contratante') {
+    //   // Navegar a pantalla de notificaciones de contratante
+    // }
+  }
   void _handleMessageOpenedApp(RemoteMessage message) {
     debugPrint("App abierta desde notificación: ${message.data}");
     _onNotificationClicked(NotificationResponse(

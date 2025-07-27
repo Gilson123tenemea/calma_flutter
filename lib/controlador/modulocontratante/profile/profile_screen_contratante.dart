@@ -71,19 +71,24 @@ class _ProfileScreenContratanteState extends State<ProfileScreenContratante> {
                 final session = await SessionService().getSession();
                 final fcmToken = session['fcmToken'] as String?;
 
-                // Llamar al servicio de logout
-                await AuthService.logout();
-
-                // Eliminar el token del backend si existe
-                if (fcmToken != null) {
+                // Primero eliminar el token del backend si existe
+                if (fcmToken != null && fcmToken.isNotEmpty) {
                   try {
-                    await http.delete(
+                    final response = await http.delete(
                       Uri.parse('${AppConfig.baseUrl}/api/dispositivos/$fcmToken'),
+                      headers: {'Content-Type': 'application/json'},
                     );
+
+                    if (response.statusCode != 200 && response.statusCode != 204) {
+                      debugPrint('Error eliminando token FCM: ${response.statusCode}');
+                    }
                   } catch (e) {
                     debugPrint('Error eliminando token FCM: $e');
                   }
                 }
+
+                // Luego hacer logout
+                await AuthService.logout();
 
                 if (mounted) {
                   Navigator.of(context).pushAndRemoveUntil(

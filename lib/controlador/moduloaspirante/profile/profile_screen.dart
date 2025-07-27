@@ -66,10 +66,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               child: const Text('Sí, cerrar sesión', style: TextStyle(color: Colors.red)),
               onPressed: () async {
-                // Limpiar la sesión primero
+                // Obtener el token FCM antes de limpiar la sesión
+                final session = await SessionService().getSession();
+                final fcmToken = session['fcmToken'] as String?;
+
+                // Primero eliminar el token del backend si existe
+                if (fcmToken != null && fcmToken.isNotEmpty) {
+                  try {
+                    final response = await http.delete(
+                      Uri.parse('${AppConfig.baseUrl}/api/dispositivos/$fcmToken'),
+                      headers: {'Content-Type': 'application/json'},
+                    );
+
+                    if (response.statusCode != 200 && response.statusCode != 204) {
+                      debugPrint('Error eliminando token FCM: ${response.statusCode}');
+                    }
+                  } catch (e) {
+                    debugPrint('Error eliminando token FCM: $e');
+                  }
+                }
+
+                // Luego hacer logout
                 await SessionService().clearSession();
 
-                // Redirigir al login
                 if (mounted) {
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const LoginScreen()),
