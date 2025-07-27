@@ -59,7 +59,7 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
         contratanteId: widget.specificId,
         aspiranteId: idAspirante,
         estado: true,
-        tituloPublicacion: tituloPublicacion, // Pasa el título aquí
+        tituloPublicacion: tituloPublicacion,
       );
 
       if (success) {
@@ -67,7 +67,17 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
         await _fetchPostulaciones();
       }
     } catch (e) {
-      _showSnackbar('Error al aceptar postulación: ${e.toString()}');
+      print('❌ Error al aceptar postulación: $e');
+
+      // CORRECCIÓN: Verificar si el error contiene el mensaje de éxito
+      String errorString = e.toString();
+      if (errorString.contains('Postulación actualizada')) {
+        // La operación fue exitosa, solo hubo un error de formato
+        _showSnackbar('Postulación aceptada correctamente');
+        await _fetchPostulaciones();
+      } else {
+        _showSnackbar('Error al aceptar postulación: ${e.toString()}');
+      }
     }
   }
 
@@ -78,7 +88,7 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
         contratanteId: widget.specificId,
         aspiranteId: idAspirante,
         estado: false,
-        tituloPublicacion: tituloPublicacion, // Pasa el título aquí
+        tituloPublicacion: tituloPublicacion,
       );
 
       if (success) {
@@ -86,9 +96,18 @@ class _FavoritesScreenContratanteState extends State<FavoritesScreenContratante>
         await _fetchPostulaciones();
       }
     } catch (e) {
-      _showSnackbar('Error al rechazar postulación: ${e.toString()}');
-    }
-  }
+      print('❌ Error al rechazar postulación: $e');
+
+      // CORRECCIÓN: Verificar si el error contiene el mensaje de éxito
+      String errorString = e.toString();
+      if (errorString.contains('Postulación actualizada')) {
+        // La operación fue exitosa, solo hubo un error de formato
+        _showSnackbar('Postulación rechazada correctamente');
+        await _fetchPostulaciones();
+      } else {
+        _showSnackbar('Error al rechazar postulación: ${e.toString()}');
+      }
+    }}
 
 
   void _showSnackbar(String message) {

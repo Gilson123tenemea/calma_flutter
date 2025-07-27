@@ -12,6 +12,8 @@ class AppConfig {
   static const String cvPorAspiranteEndpoint = '/api/cvs/por-aspirante';
   static const String descargarCertificadoEndpoint = '/api/certificados';
   static const String descargarRecomendacionEndpoint = '/api/recomendaciones';
+  static const String calificacionesCompletasEndpoint = '/api/cvs/aspirante';
+
 
 
   static String get loginUrl => '$baseUrl$loginEndpoint';
@@ -26,6 +28,8 @@ class AppConfig {
   static String getCvPorAspiranteUrl(int aspiranteId) => '$baseUrl$cvPorAspiranteEndpoint/$aspiranteId';
   static String getDescargarCertificadoUrl(int certificadoId) => '$baseUrl$descargarCertificadoEndpoint/$certificadoId/descargar';
   static String getDescargarRecomendacionUrl(int recomendacionId) => '$baseUrl$descargarRecomendacionEndpoint/$recomendacionId/descargar';
+
+  static String getCalificacionesCompletasUrl(int aspiranteId) => '$baseUrl$calificacionesCompletasEndpoint/$aspiranteId/calificaciones/completas';
 
   static String getPublicacionesNoPostuladasUrl(int idAspirante) =>
       '$baseUrl$generarEndpoint/publicaciones-no-postuladas/$idAspirante';

@@ -15,6 +15,19 @@ class MostrarCV {
     }
   }
 
+  // Nuevo método para obtener calificaciones completas
+  Future<Map<String, dynamic>> obtenerCalificacionesCompletas(int aspiranteId) async {
+    final url = AppConfig.getCalificacionesCompletasUrl(aspiranteId);
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Error al obtener calificaciones: ${response.body}');
+    }
+  }
+
   Future<void> descargarCertificado(int certificadoId) async {
     final url = AppConfig.getDescargarCertificadoUrl(certificadoId);
 

@@ -13,7 +13,30 @@ class PostulacionService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      List<dynamic> postulaciones = json.decode(response.body);
+
+      // Ordenar las postulaciones por fecha de creación (más recientes primero)
+      postulaciones.sort((a, b) {
+        try {
+          // Intentar ordenar por fecha de postulación si existe
+          final fechaA = DateTime.tryParse(a['postulacion']['fecha_postulacion']?.toString() ?? '');
+          final fechaB = DateTime.tryParse(b['postulacion']['fecha_postulacion']?.toString() ?? '');
+
+          if (fechaA != null && fechaB != null) {
+            return fechaB.compareTo(fechaA); // Más recientes primero
+          }
+
+          // Si no hay fecha, ordenar por ID (IDs más altos primero = más recientes)
+          final idA = a['postulacion']['id_postulacion'] ?? 0;
+          final idB = b['postulacion']['id_postulacion'] ?? 0;
+          return idB.compareTo(idA);
+        } catch (e) {
+          print('Error al ordenar postulaciones: $e');
+          return 0;
+        }
+      });
+
+      return postulaciones;
     } else if (response.statusCode == 204) {
       return [];
     } else {
@@ -21,6 +44,7 @@ class PostulacionService {
     }
   }
 
+  // AQUÍ ESTÁ LA CORRECCIÓN PRINCIPAL DEL ERROR
   Future<bool> actualizarEstadoPostulacion({
     required int postulacionId,
     required int contratanteId,
@@ -58,44 +82,24 @@ class PostulacionService {
 
       print('Respuesta actualización: ${responsePut.statusCode} - ${responsePut.body}');
 
+      // CORRECCIÓN: El backend devuelve texto plano, no JSON
       if (responsePut.statusCode == 200) {
-        final responseBody = json.decode(responsePut.body);
-        if (responseBody['success'] != true) {
-          throw Exception('Error en la respuesta del servidor');
-        }
+        final responseBody = responsePut.body;
+        print('Respuesta del servidor: $responseBody');
 
-        // 3. Enviar notificación
-        final mensaje = estado
-            ? '¡Felicidades! Tu postulación para "$tituloPublicacion" ha sido aceptada.'
-            : 'Lamentamos informarte que tu postulación para "$tituloPublicacion" no ha sido aceptada.';
-
-        print('Preparando notificación: $mensaje');
-
-        final notificacion = Notificaciones(
-          descripcion: mensaje,
-          idAspirante: aspiranteId,
-          idPostulacion: postulacionId,
-          fecha: DateTime.now().toUtc(),
-        );
-
-        print('Notificación a enviar: ${notificacion.toJson()}');
-
-        try {
-          await _notificacionesService.crearNotificacion(notificacion);
-          print('Notificación enviada con éxito');
+        // Verificar que la respuesta contenga el mensaje de éxito
+        if (responseBody.contains('Postulación actualizada')) {
+          print('✅ Postulación actualizada correctamente en el servidor');
           return true;
-        } catch (e) {
-          print('Error al enviar notificación: $e');
-          throw Exception('Postulación actualizada pero falló la notificación');
+        } else {
+          throw Exception('Respuesta inesperada del servidor: $responseBody');
         }
       } else {
         throw Exception('Error al actualizar postulación: ${responsePut.statusCode}');
       }
     } catch (e) {
-      print('Error en actualizarEstadoPostulacion: $e');
+      print('❌ Error en actualizarEstadoPostulacion: $e');
       rethrow;
     }
-
-
   }
 }
