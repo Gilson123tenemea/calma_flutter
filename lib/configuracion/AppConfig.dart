@@ -13,7 +13,7 @@ class AppConfig {
   static const String descargarCertificadoEndpoint = '/api/certificados';
   static const String descargarRecomendacionEndpoint = '/api/recomendaciones';
   static const String calificacionesCompletasEndpoint = '/api/cvs/aspirante';
-
+  static const String fichaPacienteEndpoint = '/api/fichas';
 
 
   static String get loginUrl => '$baseUrl$loginEndpoint';
@@ -40,4 +40,6 @@ class AppConfig {
   //link de registrar token
   static String get registrarDispositivoUrl => '$baseUrl/api/dispositivos';
   static String get notificacionpushpostulacion => '$baseUrl/api/dispositivos/enviar-push';
+  static String getFichaPacienteUrl(int idPaciente) => '$baseUrl$fichaPacienteEndpoint/$idPaciente';
+
 }

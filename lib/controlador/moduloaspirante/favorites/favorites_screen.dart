@@ -1,9 +1,9 @@
 import 'package:calma/controlador/moduloaspirante/PostulacionesNotifier.dart';
+import 'package:calma/controlador/moduloaspirante/favorites/FichaPacienteScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:calma/configuracion/AppConfig.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 
 class FavoritesScreen extends StatefulWidget {
   final int idAspirante;
@@ -18,7 +18,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
 
-  // ✨ NUEVA VARIABLE: Listener para actualizaciones automáticas
   late VoidCallback _postulacionListener;
 
   @override
@@ -26,7 +25,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     super.initState();
     _fetchPostulaciones();
 
-    // ✨ NUEVO: Configurar listener para actualizaciones automáticas
     _postulacionListener = () {
       print('🔔 Recibida notificación de nueva postulación, actualizando...');
       if (mounted) {
@@ -34,25 +32,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       }
     };
 
-    // Registrar el listener
     PostulacionesNotifier().addRefreshListener(_postulacionListener);
   }
 
-  // ✨ NUEVO: Limpiar listener al destruir el widget
   @override
   void dispose() {
     PostulacionesNotifier().removeRefreshListener(_postulacionListener);
     super.dispose();
   }
 
-  // ✨ NUEVO: Método público para refrescar desde fuera
   Future<void> refreshPostulaciones() async {
     await _fetchPostulaciones();
   }
 
-  // ✨ MODIFICADO: Método mejorado para cargar postulaciones
   Future<void> _fetchPostulaciones() async {
-    if (!mounted) return; // Verificar si el widget aún está montado
+    if (!mounted) return;
 
     setState(() {
       _isLoading = true;
@@ -63,12 +57,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       final url = Uri.parse('${AppConfig.baseUrl}/api/realizar/aspirante/${widget.idAspirante}');
       final response = await http.get(url);
 
-      if (!mounted) return; // Verificar nuevamente antes de setState
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final List<dynamic> nuevasPostulaciones = json.decode(response.body);
 
-        // ✨ DEBUG: Imprimir estructura de datos para debug
         if (nuevasPostulaciones.isNotEmpty) {
           print('🔍 Estructura de datos recibida:');
           print('Keys principales: ${nuevasPostulaciones[0].keys.toList()}');
@@ -86,7 +79,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           _errorMessage = '';
         });
 
-        // ✨ Log para debugging
         print('✅ Postulaciones actualizadas: ${_postulaciones.length} elementos');
 
       } else if (response.statusCode == 204) {
@@ -120,9 +112,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return estado ? Colors.green : Colors.red;
   }
 
-  // ✨ NUEVO: Método para obtener el salario de manera segura
   String _getSalario(Map<String, dynamic> postulacionEmpleo) {
-    // Intentar diferentes nombres de campo para el salario
     final salario = postulacionEmpleo['salario_estimado'] ??
         postulacionEmpleo['salario'] ??
         postulacionEmpleo['sueldo'] ??
@@ -138,13 +128,31 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return 'No especificado';
   }
 
-  // ✨ NUEVO: Método para obtener texto de manera segura
   String _getTextoSeguro(Map<String, dynamic> data, String key, {String defaultValue = 'No especificado'}) {
     final value = data[key];
     if (value == null || value.toString().isEmpty) {
       return defaultValue;
     }
     return value.toString();
+  }
+
+  int? _getIdPaciente(Map<String, dynamic> postulacionEmpleo) {
+    final idPaciente = postulacionEmpleo['id_paciente'];
+    if (idPaciente is int) {
+      return idPaciente;
+    } else if (idPaciente is String) {
+      return int.tryParse(idPaciente);
+    }
+    return null;
+  }
+
+  void _navigateToFichaPaciente(int idPaciente) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FichaPacienteScreen(idPaciente: idPaciente),
+      ),
+    );
   }
 
   @override
@@ -165,7 +173,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         backgroundColor: const Color(0xFF0E1E3A), // Azul oscuro
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        // ✨ NUEVO: Botón de actualización manual
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
@@ -174,7 +181,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           ),
         ],
       ),
-      // ✨ NUEVO: RefreshIndicator para pull-to-refresh
       body: RefreshIndicator(
         onRefresh: _fetchPostulaciones,
         color: const Color(0xFF0E1E3A),
@@ -190,8 +196,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           itemBuilder: (context, index) {
             final postulacion = _postulaciones[index];
             final postulacionEmpleo = postulacion['postulacion']['postulacion_empleo'];
+            final bool esAprobado = postulacion['postulacion']['estado'] == true;
+            final int? idPaciente = _getIdPaciente(postulacionEmpleo);
 
-            // ✨ MANEJO SEGURO DE FECHA
             DateTime? fechaLimite;
             String fechaFormateada = 'No especificada';
 
@@ -289,7 +296,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // ✨ MANEJO SEGURO DE ACTIVIDADES
                       ..._getActividades(postulacionEmpleo)
                           .map((actividad) => Padding(
                         padding: const EdgeInsets.only(bottom: 4),
@@ -311,6 +317,36 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         ),
                       ))
                           .toList(),
+
+                      if (esAprobado && idPaciente != null) ...[
+                        const SizedBox(height: 16),
+                        const Divider(color: Colors.white24),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _navigateToFichaPaciente(idPaciente),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4FC3F7),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                              elevation: 3,
+                            ),
+                            icon: const Icon(Icons.medical_information, size: 20),
+                            label: const Text(
+                              'Ver Ficha Paciente',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+
                       const SizedBox(height: 16),
                       const Divider(color: Colors.white24),
                     ],
@@ -324,7 +360,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
-  // ✨ NUEVO: Método para obtener actividades de manera segura
   List<String> _getActividades(Map<String, dynamic> postulacionEmpleo) {
     final actividades = postulacionEmpleo['actividades_realizar'];
 
@@ -343,7 +378,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return ['Actividades no disponibles'];
   }
 
-  // ✨ NUEVO: Widget mejorado para estado de error
   Widget _buildErrorState() {
     return Center(
       child: Padding(
@@ -389,7 +423,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
-  // ✨ NUEVO: Widget mejorado para estado vacío
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
