@@ -1,12 +1,40 @@
+import 'package:calma/controlador/moduloaspirante/PostulacionesNotifier.dart';
 import 'package:calma/controlador/moduloaspirante/home/detalle_publicacion.dart';
 import 'package:calma/servicios/notificaciones_servicios.dart';
 import 'package:calma/servicios/verpublicaciones_emple_aspi.dart';
 import 'package:flutter/material.dart';
 import 'package:calma/servicios/realizar_service.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   final int idAspirante;
   const HomeView({super.key, required this.idAspirante});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  late Future<List<PublicacionGenerada>> _futurePublicaciones;
+  final PublicacionService _publicacionService = PublicacionService();
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPublicaciones();
+  }
+
+  void _cargarPublicaciones() {
+    setState(() {
+      _futurePublicaciones = _publicacionService.obtenerPublicacionesNoPostuladas(widget.idAspirante);
+    });
+  }
+
+  Future<void> _refrescarPublicaciones() async {
+    print('🔄 Refrescando publicaciones...');
+    setState(() {
+      _futurePublicaciones = _publicacionService.obtenerPublicacionesNoPostuladas(widget.idAspirante);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,39 +54,50 @@ class HomeView extends StatelessWidget {
         backgroundColor: const Color(0xFF0E1E3A), // Azul oscuro exacto
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _refrescarPublicaciones,
+            tooltip: 'Actualizar empleos',
+          ),
+        ],
       ),
-      body: FutureBuilder<List<PublicacionGenerada>>(
-        future: PublicacionService().obtenerPublicacionesNoPostuladas(idAspirante),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildLoadingIndicator();
-          } else if (snapshot.hasError) {
-            return _buildErrorWidget(snapshot.error.toString());
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return _buildEmptyState();
-          } else {
-            return ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: snapshot.data!.map((publicacion) =>
-                  _buildJobCard(publicacion, context,idAspirante)
-              ).toList(),
-            );
-          }
-        },
+      body: RefreshIndicator(
+        onRefresh: _refrescarPublicaciones,
+        color: const Color(0xFF0E1E3A),
+        child: FutureBuilder<List<PublicacionGenerada>>(
+          future: _futurePublicaciones,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildLoadingIndicator();
+            } else if (snapshot.hasError) {
+              return _buildErrorWidget(snapshot.error.toString());
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return _buildEmptyState();
+            } else {
+              return ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: snapshot.data!.map((publicacion) =>
+                    _buildJobCard(publicacion, context, widget.idAspirante)
+                ).toList(),
+              );
+            }
+          },
+        ),
       ),
     );
   }
 
   Widget _buildLoadingIndicator() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF0E1E3A)),
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0E1E3A)),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Cargando empleos...',
             style: TextStyle(
               color: Color(0xFF0E1E3A),
@@ -79,11 +118,11 @@ class HomeView extends StatelessWidget {
           children: [
             Icon(Icons.error_outline, size: 50, color: Colors.red[400]),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Error al cargar empleos',
               style: TextStyle(
                 fontSize: 18,
-                color: const Color(0xFF0E1E3A),
+                color: Color(0xFF0E1E3A),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -102,9 +141,7 @@ class HomeView extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              onPressed: () {
-                // Recargar
-              },
+              onPressed: _refrescarPublicaciones,
               child: const Text(
                 'Reintentar',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -123,13 +160,13 @@ class HomeView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.work_outline, size: 50, color: const Color(0xFF0E1E3A)),
+            const Icon(Icons.work_outline, size: 50, color: Color(0xFF0E1E3A)),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No hay empleos disponibles',
               style: TextStyle(
                 fontSize: 18,
-                color: const Color(0xFF0E1E3A),
+                color: Color(0xFF0E1E3A),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -139,13 +176,28 @@ class HomeView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[600]),
             ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0E1E3A),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              onPressed: _refrescarPublicaciones,
+              child: const Text(
+                'Actualizar',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildJobCard(PublicacionGenerada publicacion, BuildContext context,  int idAspirante) {
+  Widget _buildJobCard(PublicacionGenerada publicacion, BuildContext context, int idAspirante) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -247,9 +299,9 @@ class HomeView extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 18, color: Colors.white),
+                        const Icon(Icons.location_on, size: 18, color: Colors.white),
                         const SizedBox(width: 8),
-                        Text(
+                        const Text(
                           'Ubicación:',
                           style: TextStyle(
                             fontSize: 14,
@@ -281,9 +333,9 @@ class HomeView extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.check_circle_outline, size: 18, color: Colors.white),
+                      const Icon(Icons.check_circle_outline, size: 18, color: Colors.white),
                       const SizedBox(width: 8),
-                      Text(
+                      const Text(
                         'Actividades:',
                         style: TextStyle(
                           fontSize: 14,
@@ -367,10 +419,10 @@ class HomeView extends StatelessWidget {
                       onPressed: () {
                         _postularse(context, publicacion, idAspirante);
                       },
-                      child: Text(
+                      child: const Text(
                         'POSTULARSE',
                         style: TextStyle(
-                          color: const Color(0xFF0E1E3A),
+                          color: Color(0xFF0E1E3A),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -411,8 +463,14 @@ class HomeView extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('Procesando postulación...'),
+          ],
+        ),
       ),
     );
 
@@ -421,58 +479,145 @@ class HomeView extends StatelessWidget {
       final realizarService = RealizarService();
       final resultado = await realizarService.postularAEmpleo(idAspirante, publicacion.idGenera);
 
+      // Cerrar diálogo de carga
+      Navigator.of(context).pop();
+
+      print('🟢 Resultado de postulación: $resultado');
+
       if (resultado['success'] == true) {
-        // 2. Obtener datos para la notificación
-        final postulacionData = resultado['data'];
-        final nombreAspirante = '${postulacionData['aspirante']['usuario']['nombres']} ${postulacionData['aspirante']['usuario']['apellidos']}';
-        final idPostulacion = postulacionData['postulacion']['id_postulacion'];
+        // 2. Manejar respuesta exitosa
+        try {
+          // Intentar obtener datos para la notificación si están disponibles
+          final postulacionData = resultado['data'];
+          String nombreAspirante = 'Usuario'; // Valor por defecto
+          int? idPostulacion;
 
-        // 3. Crear y enviar notificación al contratante
-        final notificacion = Notificaciones(
-          descripcion: 'El aspirante $nombreAspirante ha postulado a: ${publicacion.titulo}',
-          idContratante: publicacion.idContratante,
-          idAspirante: idAspirante,
-          idPostulacion: idPostulacion,
-          fecha: DateTime.now(),
-        );
+          // Intentar extraer información si está disponible
+          if (postulacionData != null && postulacionData is Map) {
+            try {
+              if (postulacionData.containsKey('aspirante') &&
+                  postulacionData['aspirante'] != null &&
+                  postulacionData['aspirante']['usuario'] != null) {
+                final usuario = postulacionData['aspirante']['usuario'];
+                nombreAspirante = '${usuario['nombres'] ?? ''} ${usuario['apellidos'] ?? ''}'.trim();
+              }
 
-        final notificacionService = NotificacionesService();
-        await notificacionService.crearNotificacion(notificacion);
+              if (postulacionData.containsKey('postulacion') &&
+                  postulacionData['postulacion'] != null) {
+                idPostulacion = postulacionData['postulacion']['id_postulacion'];
+              } else if (postulacionData.containsKey('id_realizar')) {
+                idPostulacion = postulacionData['id_realizar'];
+              }
+            } catch (e) {
+              print('🟠 Error extrayendo datos de postulación: $e');
+            }
+          }
 
-        // 4. Mostrar feedback al usuario
-        Navigator.of(context).pop(); // Cerrar diálogo de carga
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Postulación exitosa!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+          // 3. Crear y enviar notificación al contratante
+          try {
+            final notificacion = Notificaciones(
+              descripcion: 'El aspirante $nombreAspirante ha postulado a: ${publicacion.titulo}',
+              idContratante: publicacion.idContratante,
+              idAspirante: idAspirante,
+              idPostulacion: idPostulacion,
+              fecha: DateTime.now(),
+            );
 
-        // 5. Opcional: Actualizar la lista de publicaciones
+            final notificacionService = NotificacionesService();
+            await notificacionService.crearNotificacion(notificacion);
+          } catch (e) {
+            print('🟠 Error enviando notificación: $e');
+            // No fallar por esto, la postulación ya se realizó
+          }
+
+          // 4. Mostrar feedback exitoso al usuario
+          final mensaje = resultado['warning'] != null
+              ? 'Postulación exitosa (${resultado['warning']})'
+              : resultado['message'] ?? '¡Postulación exitosa!';
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(mensaje),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+
+          // 5. ✨ ACTUALIZAR LA LISTA INMEDIATAMENTE ✨
+          print('🔄 Actualizando lista después de postulación exitosa...');
+          _refrescarPublicaciones();
+
+          // ✨ NUEVA LÍNEA: Notificar a la pantalla de postulaciones
+          PostulacionesNotifier().notifyPostulacionRealizada();
+
+        } catch (e) {
+          print('🟠 Error en procesamiento post-postulación: $e');
+          // Mostrar mensaje de éxito simple y actualizar lista
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Postulación exitosa!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Actualizar lista incluso si hay errores secundarios
+          _refrescarPublicaciones();
+
+          // ✨ NUEVA LÍNEA: Notificar incluso en caso de error secundario
+          PostulacionesNotifier().notifyPostulacionRealizada();
+        }
 
       } else {
-        Navigator.of(context).pop(); // Cerrar diálogo de carga
+        // Manejar errores
+        final mensajeError = resultado['message'] ?? 'Error desconocido al postular';
+
+        // Diferentes colores según el tipo de error
+        Color backgroundColor = Colors.red;
+        if (mensajeError.contains('Ya te has postulado') ||
+            mensajeError.contains('Ya se ha postulado')) {
+          backgroundColor = Colors.orange;
+          // Si ya se postuló, también actualizar la lista para quitar la publicación
+          _refrescarPublicaciones();
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(resultado['message'] ?? 'Error al postular'),
-            backgroundColor: Colors.red,
+            content: Text(mensajeError),
+            backgroundColor: backgroundColor,
+            duration: const Duration(seconds: 4),
+            action: resultado['shouldRetry'] != false
+                ? SnackBarAction(
+              label: 'Reintentar',
+              onPressed: () => _postularse(context, publicacion, idAspirante),
+            )
+                : null,
           ),
         );
       }
+
     } catch (e) {
-      Navigator.of(context).pop(); // Cerrar diálogo de carga
+      // Cerrar diálogo de carga si aún está abierto
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      print('🔴 Error general en _postularse: $e');
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text('Error inesperado: ${e.toString()}'),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'Reintentar',
+            onPressed: () => _postularse(context, publicacion, idAspirante),
+          ),
         ),
       );
     }
   }
 
   Future<void> enviarNotificacion(int idContratante, String tituloPublicacion, String nombreAspirante) async {
-
+    // Implementación si es necesaria
   }
-
-
 }
