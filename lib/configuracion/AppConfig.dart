@@ -1,4 +1,5 @@
 class AppConfig {
+
   static const String baseUrl = 'http://192.168.0.105:8090';
 
   static const String loginEndpoint = '/api/login/auth';
