@@ -98,34 +98,7 @@ class DetallePublicacionView extends StatelessWidget {
               width: double.infinity,
               height: 60,  // Altura aumentada
               margin: const EdgeInsets.only(bottom: 20),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0E1E3A),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 5,
-                  shadowColor: Colors.black.withOpacity(0.3),
-                ),
-                onPressed: () {
-                  _postularse(context);
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.send, color: Colors.white),
-                    SizedBox(width: 10),
-                    Text(
-                      'POSTULARSE AHORA',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+
             ),
           ],
         ),
@@ -365,7 +338,6 @@ class DetallePublicacionView extends StatelessWidget {
         children: [
           _buildContractorDetail(Icons.person, 'Nombre', publicacion.nombreCompletoContratante),
           const Divider(height: 16),
-          _buildContractorDetail(Icons.email, 'Correo electrónico', 'No disponible'), // Modificar según tus datos
         ],
       ),
     );
@@ -403,51 +375,8 @@ class DetallePublicacionView extends StatelessWidget {
     );
   }
 
-  void _postularse(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar postulación'),
-        content: const Text('¿Estás seguro que deseas postularte a este empleo?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0E1E3A),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              _showPostulacionExitosa(context);
-            },
-            child: const Text('Postularme'),
-          ),
-        ],
-      ),
-    );
-  }
 
-  void _showPostulacionExitosa(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Postulación exitosa'),
-        content: const Text('Tu postulación ha sido enviada correctamente.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Cierra también el detalle
-            },
-            child: const Text('Aceptar'),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   String _formatDate(String dateString) {
     try {

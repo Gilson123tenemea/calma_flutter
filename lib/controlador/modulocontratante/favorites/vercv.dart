@@ -255,7 +255,14 @@ class _VerCVState extends State<VerCV> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hoja de Vida'),
+        title: const Text(
+          'Hoja de Vida',
+          style: TextStyle(
+            color: Colors.white, // Color blanco
+            fontWeight: FontWeight.bold, // Texto más grueso
+          ),
+        ),
+        centerTitle: true, // Centrar el título
         backgroundColor: const Color(0xFF0A2647),
       ),
       body: _isLoading

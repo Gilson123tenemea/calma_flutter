@@ -114,7 +114,8 @@ class _ProfileScreenContratanteState extends State<ProfileScreenContratante> {
           child: Text(
             'Perfil del Contratante',
             style: const TextStyle(
-              color: Colors.white, // Cambia el color aquí
+              color: Colors.white,      // Texto blanco
+              fontWeight: FontWeight.bold, // Negrita (más grueso)
             ),
           ),
         ),

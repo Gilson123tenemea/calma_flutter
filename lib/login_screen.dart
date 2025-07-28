@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:calma/configuracion/AppConfig.dart';
 import 'package:calma/controlador/moduloaspirante/navigation/bottom_nav_bar.dart';
 import 'package:calma/servicios/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -134,8 +135,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isRecoveryLoading = true);
 
     try {
+      // Usar AppConfig para obtener usuario por correo
       final userResponse = await http.get(
-        Uri.parse('http://192.168.0.111:8090/api/usuarios/por-correo?correo=$email'),
+        Uri.parse('${AppConfig.baseUrl}/api/usuarios/por-correo?correo=$email'),
       );
 
       if (userResponse.statusCode != 200) {
@@ -146,8 +148,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final userId = userData['userId'];
       final userType = userData['userType'];
 
+      // Usar AppConfig para el endpoint de reset de contraseña
       final resetResponse = await http.post(
-        Uri.parse('http://192.168.0.111:8090/api/password/request-reset'),
+        Uri.parse('${AppConfig.baseUrl}/api/password/request-reset'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {'userId': userId.toString(), 'userType': userType},
       );
@@ -224,176 +227,293 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0A2647),
-              Color(0xFF144272),
-              Color(0xFF205295),
-            ],
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Título
-                Column(
+      backgroundColor: Colors.white, // Fondo blanco
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20), // Espacio arriba reducido
+
+              // Elemento decorativo bonito arriba - MÁS ANCHO
+              Container(
+                width: double.infinity,
+                height: 180, // Aumentado para más contenido
+                margin: const EdgeInsets.symmetric(horizontal: 8), // Márgenes AÚN MÁS pequeños = MÁS ANCHO
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF0A2647),
+                      Color(0xFF144272),
+                      Color(0xFF205295),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Stack(
                   children: [
-                    Text(
-                      'CALMA',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 1.5,
+                    // Círculos decorativos más bonitos
+                    Positioned(
+                      top: -20,
+                      right: -20,
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Inicia sesión para continuar',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 16,
-                        color: Colors.white70,
+                    Positioned(
+                      bottom: -30,
+                      left: -30,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 20,
+                      left: 20,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    // Icono geriátrico decorativo
+                    Positioned(
+                      top: 30,
+                      right: 30,
+                      child: Icon(
+                        Icons.elderly,
+                        color: Colors.white.withOpacity(0.2),
+                        size: 50,
+                      ),
+                    ),
+                    // Contenido mejorado centrado
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Bienvenido a',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 16,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'CALMA',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 3.0,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              width: 60,
+                              height: 2,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(1),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Conectando cuidadores\nespecializados con familias',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.montserrat(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.8),
+                                fontWeight: FontWeight.w400,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '• Cuidado geriátrico profesional •',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.6),
+                                fontWeight: FontWeight.w300,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 40),
+              const SizedBox(height: 30), // Espacio entre elemento decorativo y cuadro
 
-                // Formulario de login
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // Campo de email
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: _buildInputDecoration(
-                          icon: Icons.email_outlined,
-                          label: 'Correo Electrónico',
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        style: GoogleFonts.montserrat(),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Campo de contraseña
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        decoration: _buildInputDecoration(
-                          icon: Icons.lock_outline,
-                          label: 'Contraseña',
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
+              // Formulario de login - MÁS ANCHO
+              Container(
+                padding: const EdgeInsets.all(32), // Más padding
+                margin: const EdgeInsets.symmetric(horizontal: 8), // Márgenes AÚN MÁS pequeños = MÁS ANCHO
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A2647), // Fondo azul oscuro
+                  borderRadius: BorderRadius.circular(20), // Bordes más redondeados
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Título dentro del cuadro azul
+                    Column(
+                      children: [
+                        Text(
+                          'Iniciar Sesión',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 28, // Ajustado
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white, // Texto blanco
+                            letterSpacing: 1.0,
                           ),
                         ),
-                        style: GoogleFonts.montserrat(),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Olvidé contraseña
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: _showRecoveryDialog,
-                          child: Text(
-                            '¿Olvidaste tu contraseña?',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 14,
-                              color: const Color(0xFF205295),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Botón de login - Destacado con texto blanco
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0A2647),
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 5,
-                            shadowColor: Colors.black.withOpacity(0.3),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                              : Text(
-                            'INICIAR SESIÓN',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.2,
-                              color: Colors.white, // Texto en blanco
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Registro
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/registro');
-                        },
-                        child: Text(
-                          '¿No tienes cuenta? Regístrate aquí',
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ingresa tus credenciales para continuar',
                           style: GoogleFonts.montserrat(
                             fontSize: 14,
-                            color: const Color(0xFF205295),
+                            color: Colors.white70, // Blanco translúcido
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32), // Espacio entre título y campos
+                    // Campo de email
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: _buildInputDecoration(
+                        icon: Icons.email_outlined,
+                        label: 'Correo Electrónico',
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      style: GoogleFonts.montserrat(color: Colors.white), // Texto blanco
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Campo de contraseña
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: _buildInputDecoration(
+                        icon: Icons.lock_outline,
+                        label: 'Contraseña',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: Colors.white54, // Icono blanco translúcido
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                      style: GoogleFonts.montserrat(color: Colors.white), // Texto blanco
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Olvidé contraseña
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _showRecoveryDialog,
+                        child: Text(
+                          '¿Olvidaste tu contraseña?',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 14,
+                            color: Colors.white, // Texto blanco sobre fondo azul
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Botón de login
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white, // Botón blanco
+                          foregroundColor: const Color(0xFF0A2647), // Texto azul
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 3,
+                          shadowColor: Colors.black.withOpacity(0.2),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF0A2647), // Spinner azul
+                          ),
+                        )
+                            : Text(
+                          'INICIAR SESIÓN',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: const Color(0xFF0A2647), // Texto azul
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Eliminado el TextButton de registro
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              const SizedBox(height: 60), // Más espacio abajo
+            ],
           ),
         ),
       ),
@@ -408,23 +528,25 @@ class _LoginScreenState extends State<LoginScreen> {
     return InputDecoration(
       labelText: label,
       labelStyle: GoogleFonts.montserrat(
-        color: Colors.grey,
+        color: Colors.white70, // Label blanco translúcido
       ),
-      prefixIcon: Icon(icon, color: const Color(0xFF0A2647)),
+      prefixIcon: Icon(icon, color: Colors.white), // Iconos blancos
       suffixIcon: suffixIcon,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.grey),
+        borderSide: const BorderSide(color: Colors.white54), // Borde blanco translúcido
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.grey),
+        borderSide: const BorderSide(color: Colors.white54), // Borde blanco translúcido
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF0A2647), width: 2),
+        borderSide: const BorderSide(color: Colors.white, width: 2), // Borde blanco cuando está enfocado
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.1), // Fondo ligeramente blanco translúcido
     );
   }
 }
